@@ -20,7 +20,9 @@
 #include <DallasTemperature.h>
 
 
-/*********** NeoPixel Einstellungen ***********/
+
+
+/***********  NeoPixel Einstellungen   ***********/
 
 #define PIN_STRIPE1			13
 #define NUMLEDS				166
