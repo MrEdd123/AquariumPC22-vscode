@@ -18,7 +18,6 @@
 #include <NeoPixelBrightnessBus.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <Funktionen.h>
 
 /***********  NeoPixel Einstellungen   ***********/
 
@@ -264,7 +263,7 @@ void sendNTPpacket(IPAddress& address);
 
 /************** Funktionen *********************/
 
-//#include <Funktionen.h>
+#include <Funktionen.h>
 
 /************************** NTP code ********************************************/
 
