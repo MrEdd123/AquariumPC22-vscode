@@ -51,7 +51,7 @@ char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
 const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-//char auth[] = "b93c1e342a6c4217b466ec684e61679b";
+//char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
 //const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
@@ -228,6 +228,7 @@ uint8_t prevW = whiteVal;
 uint16_t LEDStep = 0;
 uint8_t Durchlauf = 1;
 uint8_t SonneIndex = 0;
+uint8_t FutterIndex = 0;
 
 uint16_t StepWert = 1020;
 
@@ -264,6 +265,8 @@ void sendNTPpacket(IPAddress& address);
 /************** Funktionen *********************/
 
 #include <Funktionen.h>
+#include <tft.h>
+#include <timer.h>
 
 /************************** NTP code ********************************************/
 
@@ -316,7 +319,6 @@ time_t getNtpTime()
 }
 
 
-
 void WIFI_login() 
 {
 
@@ -367,7 +369,6 @@ void reconnectBlynk()
 	}
 }
 /********************************************************************************/
-
 
 
 
@@ -751,9 +752,6 @@ BLYNK_WRITE(V38)
 
 /*************************************************/
 
-
-
-/*************************************************/
 void setup() 
 {
 
@@ -762,8 +760,6 @@ void setup()
 	/********* TFT Layout setzen ***************/
 
 	TFT_Layout();
-
-	
 
 	pinMode(heizung, OUTPUT);
 	pinMode(luefter, OUTPUT);
@@ -913,6 +909,16 @@ void loop()
 	case 5:
 		SonneNaAus();
 		break;
+	}
+
+
+	switch (FutterIndex)
+	{
+
+	case 1:
+		Futterautomat();
+		break;
+	
 	}
 
 }
