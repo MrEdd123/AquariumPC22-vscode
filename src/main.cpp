@@ -47,12 +47,12 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-const char* host = "aquarium-webupdate";
+//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+//const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-//char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
-//const char* host = "aquarium-webupdate-beta";
+char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
+const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
@@ -775,7 +775,7 @@ void setup()
 	Timer.setInterval(1000, digitalClockDisplay);
 	Timer.setInterval(1000, ProgrammTimer);
 	Timer.setInterval(5000, Heizung);
-	Timer.setInterval(20000, WIFI_login);
+	Timer.setInterval(200000, WIFI_login);
 	//Alarm.timerRepeat(120, reconnectBlynk);
 
 	/******* Blynk LCD löschen ******************/

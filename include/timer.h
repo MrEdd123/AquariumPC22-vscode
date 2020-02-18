@@ -51,7 +51,6 @@ void ProgrammTimer()
 	FutterTimer = ((FutterMin)+(FutterStd) * 100);
 	if ((Zeit == FutterTimer) & (second(local_t) == 0))
 	{
-		//Futterautomat();
 		FutterIndex = 1;
 	}
 

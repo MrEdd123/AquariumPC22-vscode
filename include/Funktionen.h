@@ -380,18 +380,25 @@ void Heizung(void)
 
 void Futterautomat(void)
 {
-	ledcWrite(FutterKanal, Futtergesch);
+	int i = (millis() % 10000);
+	Serial.println(i);
 
-	//if(currentMillis - previousMillis > Futterdauer) {
-    
-    	//previousMillis = currentMillis; 
-		delay(Futterdauer);
-
+		if (millis() % 10000 > Futterdauer) 	//Das ist der Modulo Trick 		https://starthardware.org/timer-mit-arduino-alternative-zu-delays/
+		{
+			
 		ledcWrite(FutterKanal, 0);
+		FutterIndex = 0;
+		Serial.println("Futterautomat AUS");
+		}
+		
+		else
+		{
+		ledcWrite(FutterKanal, Futtergesch);
 
-		Serial.println("Futterautomat");
-		FutterIndex = 0;		
-	}
+		Serial.println("Futterautomat AN");
+				
+		}
+}
 
 
 /********************************************/
