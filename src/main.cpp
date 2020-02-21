@@ -47,12 +47,12 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-//const char* host = "aquarium-webupdate";
+char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
-const char* host = "aquarium-webupdate-beta";
+//char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
+//const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
@@ -160,7 +160,7 @@ uint16_t Futterfreq = 250;
 uint8_t FutterKanal = 0;
 uint8_t FutterRes = 8;
 uint16_t Futtergesch = 0;
-uint16_t Futterdauer = 1000;
+uint16_t Futterdauer = 2000;
 
 uint8_t PowerledPin = 16;
 uint16_t Powerledfreq = 2000;
@@ -175,9 +175,8 @@ uint8_t LEDGruen;
 uint8_t LEDBlau;
 uint8_t LEDWeiss;
 
-
-unsigned long currentMillis;
-unsigned long previousMillis = 0;
+unsigned long PowerLEDMillis = 0;
+unsigned long FutterMillis = 0;
 
 /**************** Pin Belegung *******************/
 
@@ -231,6 +230,8 @@ uint8_t SonneIndex = 0;
 uint8_t FutterIndex = 0;
 
 uint16_t StepWert = 1020;
+
+
 
 /******** BLYNK FUNKTIONEN  ********************/
 
@@ -492,6 +493,7 @@ BLYNK_WRITE(V34) {
 
 	Blynk.virtualWrite(V34, param.asFloat());
 	Futterdauer = param.asFloat();
+	Futterdauer = Futterdauer * 1000;
 }
 
 BLYNK_WRITE(V35) {
@@ -647,7 +649,7 @@ BLYNK_WRITE(V16)
 	int i = param.asInt();
 	if (i == 1) {
 
-		Futterautomat();
+		FutterIndex = 1;
 	}
 	
 	/*ledcWrite(FutterKanal, Futtergesch);
@@ -886,8 +888,6 @@ void loop()
 
 	strip1.SetBrightness(aktHell);
 	strip1.Show();
-
-	currentMillis = millis();
 
 	
 	/******** Schalter für Beleuchtung ********/

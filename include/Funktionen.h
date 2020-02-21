@@ -3,42 +3,45 @@
 #ifndef _FUNKTIONEN_h
 #define _FUNKTIONEN_h
 
-
 void PowerLEDplus()
 {
 	uint16_t PowerLEDFade;
 	PowerLEDFade = DurchWait * 50;
-	
-		if (currentMillis - previousMillis > PowerLEDFade) {
-			previousMillis = currentMillis;
-			if (Powerledwert < Powerledmax) {
-				Powerledwert++;
-				ledcWrite(PowerledKanal, Powerledwert);
-				}
-			else
-			{
-				Durchlauf++;
-			}
 
-			/*Serial.print("PowerLED++ ");
+	if (millis() - PowerLEDMillis > PowerLEDFade)
+	{
+		PowerLEDMillis = millis();
+		if (Powerledwert < Powerledmax)
+		{
+			Powerledwert++;
+			ledcWrite(PowerledKanal, Powerledwert);
+		}
+		else
+		{
+			Durchlauf++;
+		}
+
+		/*Serial.print("PowerLED++ ");
 			Serial.println(Powerledwert);	
 			Serial.print(DurchWait);
 			Serial.print("  ");
 			Serial.println(PowerLEDFade);*/
-		}
+	}
 }
 
 void PowerLEDminus()
 {
 	uint16_t PowerLEDFade;
 	PowerLEDFade = DurchWait * 50;
-	if (currentMillis - previousMillis > PowerLEDFade) {
-		previousMillis = currentMillis;
-		if (Powerledwert > 0) {
+	if (millis() - PowerLEDMillis > PowerLEDFade)
+	{
+		PowerLEDMillis = millis();
+		if (Powerledwert > 0)
+		{
 			Powerledwert--;
 			ledcWrite(PowerledKanal, Powerledwert);
 		}
-		if(Powerledwert == 0) 
+		if (Powerledwert == 0)
 		{
 			Durchlauf++;
 		}
@@ -47,16 +50,15 @@ void PowerLEDminus()
 	}
 }
 
-
-int calculateStep(int prevValue, int endValue) 
+int calculateStep(int prevValue, int endValue)
 {
 	int step = endValue - prevValue; // What's the overall gap?
-	if (step) {                      // If its non-zero, 
-		step = StepWert / step;              //   divide by 1020
+	if (step)
+	{							// If its non-zero,
+		step = StepWert / step; //   divide by 1020
 	}
 	return step;
 }
-
 
 /* The next function is calculateVal. When the loop value, i,
 *  reaches the step size appropriate for one of the
@@ -64,22 +66,27 @@ int calculateStep(int prevValue, int endValue)
 *  (R, G, and B are each calculated separately.)
 */
 
-int calculateVal(int step, int val, int i) 
+int calculateVal(int step, int val, int i)
 {
 
-	if ((step) && i % step == 0) { // If step is non-zero and its time to change a value,
-		if (step > 0) {              //   increment the value if step is positive...
+	if ((step) && i % step == 0)
+	{ // If step is non-zero and its time to change a value,
+		if (step > 0)
+		{ //   increment the value if step is positive...
 			val += 2;
 		}
-		else if (step < 0) {         //   ...or decrement it if step is negative
+		else if (step < 0)
+		{ //   ...or decrement it if step is negative
 			val -= 2;
 		}
 	}
 	// Defensive driving: make sure val stays in the range 0-255
-	if (val > 255) {
+	if (val > 255)
+	{
 		val = 255;
 	}
-	else if (val < 0) {
+	else if (val < 0)
+	{
 		val = 0;
 	}
 	return val;
@@ -91,8 +98,7 @@ int calculateVal(int step, int val, int i)
 *  the color values to the correct pins.
 */
 
-
-void crossFade(int color[4]) 
+void crossFade(int color[4])
 {
 
 	int stepR = calculateStep(prevR, (color[0] * 255) / 100);
@@ -100,12 +106,15 @@ void crossFade(int color[4])
 	int stepB = calculateStep(prevB, (color[2] * 255) / 100);
 	int stepW = calculateStep(prevW, (color[3] * 255) / 100);
 
-	do {										// Delay schleife f�r�s Fading
+	do
+	{ // Delay schleife f�r�s Fading
 
-		if (LEDStep <= StepWert) {
+		if (LEDStep <= StepWert)
+		{
 
 			LEDStep++;
-			if (LEDStep >= (StepWert + 1)) {
+			if (LEDStep >= (StepWert + 1))
+			{
 				LEDStep = 0;
 				Durchlauf++;
 			}
@@ -115,12 +124,13 @@ void crossFade(int color[4])
 			bluVal = calculateVal(stepB, bluVal, LEDStep);
 			whiteVal = calculateVal(stepW, whiteVal, LEDStep);
 
-			for (int i = 0; i < NUMLEDS; i++) {
+			for (int i = 0; i < NUMLEDS; i++)
+			{
 
 				strip1.SetPixelColor(i, RgbwColor(grnVal, redVal, bluVal, whiteVal));
 			}
 
-			prevR = redVal;						// Update current values for next loop
+			prevR = redVal; // Update current values for next loop
 			prevG = grnVal;
 			prevB = bluVal;
 			prevW = whiteVal;
@@ -130,88 +140,79 @@ void crossFade(int color[4])
 			crossFadeWait = DurchWait;
 		}
 	} while (crossFadeWait = 0);
-	crossFadeWait --;
-
-
+	crossFadeWait--;
 }
 
 void SonneAuf(void)
 {
 	ledcWrite(BacklightKanalTFT, BacklightwertTag);
 	lcd.print(0, 0, "Sonnenaufgang");
-	AblaufI ++;
-	
-	if (AblaufI >= 100) {
-		AblaufX ++;
+	AblaufI++;
+
+	if (AblaufI >= 100)
+	{
+		AblaufX++;
 		AblaufI = 0;
 		tft.drawFastVLine(AblaufX, 116, 11, TFT_WHITE);
-		
-		}
-
-		switch (Durchlauf)
-		{
-		case 1:
-			Serial.println("Case1");
-			crossFade(SonAu1);
-			break;
-		case 2:
-			Serial.println("Case2");
-			crossFade(SonAu2);
-			break;
-		case 3:
-			Serial.println("Case3");
-			crossFade(SonAu3);
-			break;
-		case 4:
-			Serial.println("Case4");
-			crossFade(SonAu4);
-			break;
-		case 5:
-			Serial.println("Case5");
-			crossFade(SonAu5);
-			break;
-		case 6:
-			Serial.println("Case6");
-			crossFade(SonAu6);
-			break;
-		case 7:
-			Serial.println("Case7");
-			crossFade(SonAu7);
-			break;
-		case 8:
-			Serial.println("Case8 PowerLED");
-			PowerLEDplus();
-			break;
-
-		case 9:
-			Serial.println("Case9 Ende");
-				Durchlauf = 1;
-				SonneIndex = 0;
-				AblaufX = 1;
-				lcd.print(0, 0, "                ");
-			
-			break;
-		}
-
 	}
 
+	switch (Durchlauf)
+	{
+	case 1:
+		Serial.println("Case1");
+		crossFade(SonAu1);
+		break;
+	case 2:
+		Serial.println("Case2");
+		crossFade(SonAu2);
+		break;
+	case 3:
+		Serial.println("Case3");
+		crossFade(SonAu3);
+		break;
+	case 4:
+		Serial.println("Case4");
+		crossFade(SonAu4);
+		break;
+	case 5:
+		Serial.println("Case5");
+		crossFade(SonAu5);
+		break;
+	case 6:
+		Serial.println("Case6");
+		crossFade(SonAu6);
+		break;
+	case 7:
+		Serial.println("Case7");
+		crossFade(SonAu7);
+		break;
+	case 8:
+		Serial.println("Case8 PowerLED");
+		PowerLEDplus();
+		break;
 
+	case 9:
+		Serial.println("Case9 Ende");
+		Durchlauf = 1;
+		SonneIndex = 0;
+		AblaufX = 1;
+		lcd.print(0, 0, "                ");
 
-
-
-
+		break;
+	}
+}
 
 void SonneUn(void)
 {
 	ledcWrite(BacklightKanalTFT, BacklightwertNacht);
 	lcd.print(0, 0, "Sonnenuntergang");
-	AblaufI ++;
-	
-	if (AblaufI >= 102) {
-		AblaufY --;
+	AblaufI++;
+
+	if (AblaufI >= 102)
+	{
+		AblaufY--;
 		AblaufI = 0;
 		tft.drawFastVLine(AblaufY, 116, 11, TFT_BLACK);
-	
 	}
 
 	switch (Durchlauf)
@@ -242,32 +243,35 @@ void SonneUn(void)
 		crossFade(SonUn7);
 		break;
 	case 9:
-		for (int i = 0; i < 10; i++) {
-			
-				strip1.SetPixelColor(i, RgbwColor(0, 0, 0, 0));
-				delay(10);
-				strip1.Show();
+		for (int i = 0; i < 10; i++)
+		{
+
+			strip1.SetPixelColor(i, RgbwColor(0, 0, 0, 0));
+			delay(10);
+			strip1.Show();
 		}
 
-		for (int i = 166; i > 17; i--) {
+		for (int i = 166; i > 17; i--)
+		{
 
-				strip1.SetPixelColor(i, RgbwColor(0, 0, 0, 0));
-				delay(10);
-				strip1.Show();
+			strip1.SetPixelColor(i, RgbwColor(0, 0, 0, 0));
+			delay(10);
+			strip1.Show();
 		}
 
-		for (int i = 10; i < 17; i++) {
+		for (int i = 10; i < 17; i++)
+		{
 
-				strip1.SetPixelColor(i, RgbwColor(0, 0, 240, 0));
-				delay(10);
-				strip1.Show();
+			strip1.SetPixelColor(i, RgbwColor(0, 0, 240, 0));
+			delay(10);
+			strip1.Show();
 		}
 		Durchlauf++;
 		break;
 
 	case 10:
 		Durchlauf = 1;
-		SonneIndex = 0; 
+		SonneIndex = 0;
 		AblaufY = 159;
 		lcd.print(0, 0, "                ");
 		break;
@@ -300,7 +304,7 @@ void SonneMitAus(void)
 	strip1.SetBrightness(maxHell);
 	strip1.Show();
 	aktHell = maxHell;
-	//PowerLEDplus();	
+	//PowerLEDplus();
 	/*for (int i = Powerledmax; Powerledwert < i; Powerledwert++) 
 	{
 		ledcWrite(PowerledKanal, Powerledwert);
@@ -328,7 +332,7 @@ void SonneNaAus(void)
 	}
 }
 
-void Heizung(void) 
+void Heizung(void)
 {
 
 	//portDISABLE_INTERRUPTS();
@@ -340,11 +344,11 @@ void Heizung(void)
 	//lcd.print(6, 1, "C");
 	//lcd.print(7, 1,(char)178);
 	tft.setTextColor(TFT_WHITE, TFT_BLACK);
-	tft.drawFloat(SollTemp, 1, 27, 47, 2);				//SollWert in TFT einblenden
+	tft.drawFloat(SollTemp, 1, 27, 47, 2); //SollWert in TFT einblenden
 	if (IstTemp > -127)
 	{
 
-		Blynk.virtualWrite(V3, IstTemp);					//IstTemp an Blynk senden
+		Blynk.virtualWrite(V3, IstTemp); //IstTemp an Blynk senden
 
 		if (IstTemp < SollTemp - Hysterese)
 		{
@@ -380,26 +384,20 @@ void Heizung(void)
 
 void Futterautomat(void)
 {
-	int i = (millis() % 10000);
-	Serial.println(i);
+	int i = millis() - FutterMillis;
+	if ((millis() - FutterMillis) > Futterdauer)
+	{
+		FutterMillis = millis();
 
-		if (millis() % 10000 > Futterdauer) 	//Das ist der Modulo Trick 		https://starthardware.org/timer-mit-arduino-alternative-zu-delays/
-		{
-			
-		ledcWrite(FutterKanal, 0);
-		FutterIndex = 0;
-		Serial.println("Futterautomat AUS");
-		}
-		
-		else
-		{
 		ledcWrite(FutterKanal, Futtergesch);
-
-		Serial.println("Futterautomat AN");
-				
+	
+		if (i == (Futterdauer + 1))
+		{
+			ledcWrite(FutterKanal, 0);
+			FutterIndex = 0;
 		}
+	}
 }
-
 
 /********************************************/
 
@@ -410,11 +408,11 @@ void sendNTPpacket(IPAddress &address)
 	memset(packetBuffer, 0, NTP_PACKET_SIZE);
 	// Initialize values needed to form NTP request
 	// (see URL above for details on the packets)
-	packetBuffer[0] = 0b11100011;   // LI, Version, Mode
-	packetBuffer[1] = 0;     // Stratum, or type of clock
-	packetBuffer[2] = 6;     // Polling Interval
-	packetBuffer[3] = 0xEC;  // Peer Clock Precision
-							 // 8 bytes of zero for Root Delay & Root Dispersion
+	packetBuffer[0] = 0b11100011; // LI, Version, Mode
+	packetBuffer[1] = 0;		  // Stratum, or type of clock
+	packetBuffer[2] = 6;		  // Polling Interval
+	packetBuffer[3] = 0xEC;		  // Peer Clock Precision
+								  // 8 bytes of zero for Root Delay & Root Dispersion
 	packetBuffer[12] = 49;
 	packetBuffer[13] = 0x4E;
 	packetBuffer[14] = 49;
@@ -426,13 +424,14 @@ void sendNTPpacket(IPAddress &address)
 	Udp.endPacket();
 }
 
-
 // calculates the daylight saving time for middle Europe. Input: Unixtime in UTC (!)
 boolean isDayLightSaving(uint32_t local_t)
 {
-	if (month(local_t) < 3 || month(local_t) > 10) return false; // no DSL in Jan, Feb, Nov, Dez
-	if (month(local_t) > 3 && month(local_t) < 10) return true; // DSL in Apr, May, Jun, Jul, Aug, Sep
-																// if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)));
+	if (month(local_t) < 3 || month(local_t) > 10)
+		return false; // no DSL in Jan, Feb, Nov, Dez
+	if (month(local_t) > 3 && month(local_t) < 10)
+		return true; // DSL in Apr, May, Jun, Jul, Aug, Sep
+					 // if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)));
 	if (month(local_t) == 3 && (hour(local_t) + 24 * day(local_t)) >= (1 + 24 * (31 - (5 * year(local_t) / 4 + 4) % 7)) || month(local_t) == 10 && (hour(local_t) + 24 * day(local_t)) < (1 + 24 * (31 - (5 * year(local_t) / 4 + 1) % 7)))
 		return true;
 	else
@@ -440,7 +439,7 @@ boolean isDayLightSaving(uint32_t local_t)
 }
 
 // returns the current date/time as UNIX timestamp, incl. timezone, including daylightsaving
-uint32_t nowLocal() 
+uint32_t nowLocal()
 {
 	uint32_t local_t = now();
 	if (isDayLightSaving(local_t))
@@ -449,6 +448,5 @@ uint32_t nowLocal()
 		local_t += timeZone * SECS_PER_HOUR;
 	return local_t;
 }
-
 
 #endif
