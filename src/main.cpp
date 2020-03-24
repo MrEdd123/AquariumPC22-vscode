@@ -18,6 +18,13 @@
 #include <NeoPixelBrightnessBus.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <Preferences.h>
+
+
+
+
+/*********** EEPROM Speichern ********************/
+Preferences preferences; 
 
 /***********  NeoPixel Einstellungen   ***********/
 
@@ -47,12 +54,12 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-const char* host = "aquarium-webupdate";
+//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+//const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-//char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
-//const char* host = "aquarium-webupdate-beta";
+char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
+const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
@@ -159,7 +166,7 @@ uint8_t FutterPin = 14;
 uint16_t Futterfreq = 250;
 uint8_t FutterKanal = 0;
 uint8_t FutterRes = 8;
-uint16_t Futtergesch = 0;
+uint16_t Futtergesch = 170;
 uint16_t Futterdauer = 2000;
 
 uint8_t PowerledPin = 16;
