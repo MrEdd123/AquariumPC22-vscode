@@ -54,12 +54,12 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-//const char* host = "aquarium-webupdate";
+char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
-const char* host = "aquarium-webupdate-beta";
+//char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
+//const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
@@ -166,7 +166,7 @@ uint8_t FutterPin = 14;
 uint16_t Futterfreq = 250;
 uint8_t FutterKanal = 0;
 uint8_t FutterRes = 8;
-uint16_t Futtergesch = 170;
+uint16_t Futtergesch = 180;
 uint16_t Futterdauer = 2000;
 
 uint8_t PowerledPin = 16;
@@ -332,7 +332,7 @@ void WIFI_login()
 
 	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
 	Serial.println("WiFi Login");
-	while (WiFi.status() != WL_CONNECTED && wifi_retry <= 5) {
+	while (WiFi.status() != WL_CONNECTED && wifi_retry <= 10) {
 		wifi_retry++;
 		WiFi.persistent(false);   // daten nicht in Flash speichern
 		WiFi.mode(WIFI_STA);
@@ -350,9 +350,10 @@ void WIFI_login()
 		Serial.println(" connected");
 		Serial.print("local IP:");
 		Serial.println(WiFi.localIP());
+		Blynk.syncAll();								  // Werte aus Blynk Cloud laden
 	}
 
-	if (wifi_retry >= 5) {
+	if (wifi_retry >= 11) {
 		wifi_retry == 0;
 		Serial.println("\nReboot");
 		ESP.restart();
@@ -784,7 +785,7 @@ void setup()
 	Timer.setInterval(1000, digitalClockDisplay);
 	Timer.setInterval(1000, ProgrammTimer);
 	Timer.setInterval(5000, Heizung);
-	Timer.setInterval(200000, WIFI_login);
+	//Timer.setInterval(200000, WIFI_login);
 	//Alarm.timerRepeat(120, reconnectBlynk);
 
 	/******* Blynk LCD löschen ******************/
@@ -822,9 +823,9 @@ void setup()
 
 	
 	///******** Blynk Verbinden / WIFI Verbinden **********/
-	WIFI_login();
+	//WIFI_login();
 
-	//Blynk.begin(auth, ssid, pass);
+	Blynk.begin(auth, ssid, pass);
 
 	Blynk.syncAll();								  // Werte aus Blynk Cloud laden
 
