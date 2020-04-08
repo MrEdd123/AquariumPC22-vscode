@@ -16,9 +16,9 @@ void PowerLEDplus()
 			Powerledwert++;
 			ledcWrite(PowerledKanal, Powerledwert);
 		}
-		else
+		if (Powerledwert == Powerledmax)
 		{
-			Durchlauf++;
+			Durchlauf = 9;
 		}
 
 		/*Serial.print("PowerLED++ ");
@@ -43,7 +43,7 @@ void PowerLEDminus()
 		}
 		if (Powerledwert == 0)
 		{
-			Durchlauf++;
+			Durchlauf = 2;
 		}
 		/*Serial.print("PowerLED-- ");
 		Serial.println(Powerledwert);	*/
@@ -139,7 +139,7 @@ void crossFade(int color[4])
 
 			crossFadeWait = DurchWait;
 		}
-	} while (crossFadeWait = 0);
+	} while (crossFadeWait == 0);
 	crossFadeWait--;
 }
 
@@ -159,40 +159,40 @@ void SonneAuf(void)
 	switch (Durchlauf)
 	{
 	case 1:
-		Serial.println("Case1");
+		//Serial.println("Case1");
 		crossFade(SonAu1);
 		break;
 	case 2:
-		Serial.println("Case2");
+		//Serial.println("Case2");
 		crossFade(SonAu2);
 		break;
 	case 3:
-		Serial.println("Case3");
+		//Serial.println("Case3");
 		crossFade(SonAu3);
 		break;
 	case 4:
-		Serial.println("Case4");
+		//Serial.println("Case4");
 		crossFade(SonAu4);
 		break;
 	case 5:
-		Serial.println("Case5");
+		//Serial.println("Case5");
 		crossFade(SonAu5);
 		break;
 	case 6:
-		Serial.println("Case6");
+		//Serial.println("Case6");
 		crossFade(SonAu6);
 		break;
 	case 7:
-		Serial.println("Case7");
+		//Serial.println("Case7");
 		crossFade(SonAu7);
 		break;
 	case 8:
-		Serial.println("Case8 PowerLED");
+		//Serial.println("Case8 PowerLED");
 		PowerLEDplus();
 		break;
 
 	case 9:
-		Serial.println("Case9 Ende");
+		//Serial.println("Case9 Ende");
 		Durchlauf = 1;
 		SonneIndex = 0;
 		AblaufX = 1;
@@ -280,7 +280,7 @@ void SonneUn(void)
 
 void SonneMitAn(void)
 {
-	Serial.println("Sonne Mittag AN");
+	//Serial.println("Sonne Mittag AN");
 	lcd.print(0, 0, "Mittagssonne AN");
 	strip1.SetBrightness(mittagHell);
 	strip1.Show();
@@ -299,7 +299,7 @@ void SonneMitAn(void)
 
 void SonneMitAus(void)
 {
-	Serial.println("Sonne Mittag Aus");
+	//Serial.println("Sonne Mittag Aus");
 	lcd.print(0, 0, "Mittagssonne AUS");
 	strip1.SetBrightness(maxHell);
 	strip1.Show();
@@ -380,6 +380,13 @@ void Heizung(void)
 			ledluefter.off();
 		}
 	}
+
+	else
+		{
+			uint8_t err=99;
+			tft.setTextColor(TFT_RED, TFT_BLACK);
+			tft.drawFloat(err, 1, 90, 33, 4);
+		}
 }
 
 void Futterautomat(void)
@@ -424,21 +431,21 @@ void sendNTPpacket(IPAddress &address)
 	Udp.endPacket();
 }
 
+// returns the current date/time as UNIX timestamp, incl. timezone, including daylightsaving
+
+
+
 // calculates the daylight saving time for middle Europe. Input: Unixtime in UTC (!)
 boolean isDayLightSaving(uint32_t local_t)
 {
-	if (month(local_t) < 3 || month(local_t) > 10)
-		return false; // no DSL in Jan, Feb, Nov, Dez
-	if (month(local_t) > 3 && month(local_t) < 10)
-		return true; // DSL in Apr, May, Jun, Jul, Aug, Sep
-					 // if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)));
-	if (month(local_t) == 3 && (hour(local_t) + 24 * day(local_t)) >= (1 + 24 * (31 - (5 * year(local_t) / 4 + 4) % 7)) || month(local_t) == 10 && (hour(local_t) + 24 * day(local_t)) < (1 + 24 * (31 - (5 * year(local_t) / 4 + 1) % 7)))
-		return true;
-	else
-		return false;
+if (month(local_t) < 3 || month(local_t) > 10) return false; // no DSL in Jan, Feb, Nov, Dez
+if (month(local_t) > 3 && month(local_t) < 10) return true; // DSL in Apr, May, Jun, Jul, Aug, Sep
+// if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)));
+if (month(local_t) == 3 && (hour(local_t) + 24 * day(local_t)) >= (1 + 24 * (31 - (5 * year(local_t) / 4 + 4) % 7)) || month(local_t) == 10 && (hour(local_t) + 24 * day(local_t)) < (1 + 24 * (31 - (5 * year(local_t) / 4 + 1) % 7)))
+return true;
+else
+return false;
 }
-
-// returns the current date/time as UNIX timestamp, incl. timezone, including daylightsaving
 uint32_t nowLocal()
 {
 	uint32_t local_t = now();

@@ -4,11 +4,11 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 #include <NeoPixelAnimator.h>
-#include <TimeAlarms.h>
+//#include <TimeAlarms.h>
 #include <HTTP_Method.h>
 #include <ArduinoOTA.h>
 #include "bitmaps.h"
-#include <WiFi.h>
+//#include <WiFi.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
@@ -21,9 +21,8 @@
 #include <Preferences.h>
 
 
-
-
 /*********** EEPROM Speichern ********************/
+
 Preferences preferences; 
 
 /***********  NeoPixel Einstellungen   ***********/
@@ -54,12 +53,12 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-const char* host = "aquarium-webupdate";
+//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+//const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-//char auth[] = "8lRc_rwhv-L0j-wHgoGEIR3vJWP3mu1K";
-//const char* host = "aquarium-webupdate-beta";
+char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
+const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
@@ -224,7 +223,7 @@ uint8_t grnVal = 0;
 uint8_t bluVal = 0;
 uint8_t whiteVal = 0;
 
-uint16_t DurchWait;
+uint16_t DurchWait = 100;
 uint16_t crossFadeWait;
 
 uint8_t prevR = redVal;
@@ -327,6 +326,7 @@ time_t getNtpTime()
 }
 
 
+
 void WIFI_login() 
 {
 
@@ -354,7 +354,7 @@ void WIFI_login()
 	}
 
 	if (wifi_retry >= 11) {
-		wifi_retry == 0;
+		wifi_retry = 0;
 		Serial.println("\nReboot");
 		ESP.restart();
 	}
@@ -778,15 +778,10 @@ void setup()
 
 	/**** Alarm Timer setzen für Funktionen ******/ 
 
-	//Alarm.timerRepeat(1, digitalClockDisplay);
-	//Alarm.timerRepeat(1, ProgrammTimer);
-	//Alarm.timerRepeat(5, Heizung);
-
-	Timer.setInterval(1000, digitalClockDisplay);
+	//Timer.setInterval(1000, digitalClockDisplay);
 	Timer.setInterval(1000, ProgrammTimer);
 	Timer.setInterval(5000, Heizung);
-	//Timer.setInterval(200000, WIFI_login);
-	//Alarm.timerRepeat(120, reconnectBlynk);
+
 
 	/******* Blynk LCD löschen ******************/
 
@@ -897,6 +892,13 @@ void loop()
 	strip1.SetBrightness(aktHell);
 	strip1.Show();
 
+
+	/************* Uhr im Display aktualisieren ********/
+
+	if (second(nowLocal()) == 00)
+	{
+		digitalClockDisplay();
+	}
 	
 	/******** Schalter für Beleuchtung ********/
 
@@ -930,6 +932,8 @@ void loop()
 	}
 
 }
+
+
 
 
 

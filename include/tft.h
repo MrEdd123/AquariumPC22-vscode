@@ -64,7 +64,7 @@ void TFT_Layout()
 void digitalClockDisplay() 
 {
 
-	char readable[20]; // declare a char buffer large enough for your output
+	//char readable[20]; // declare a char buffer large enough for your output
 
 	uint32_t local_t = nowLocal(); //f�r Zeitumstellung n�tig
 
@@ -170,7 +170,7 @@ void FutterTimer()
 
 void WIFI_TFT() 
 {
-	int wifi_ctr = 0;
+	//int wifi_ctr = 0;
 	while (WiFi.status() != WL_CONNECTED) {
 		delay(500);
 		tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
