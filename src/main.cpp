@@ -30,7 +30,7 @@ Preferences preferences;
 #define PIN_STRIPE1			13
 #define NUMLEDS				166
 
-NeoPixelBrightnessBus<NeoRgbwFeature, NeoEsp32Rmt0800KbpsMethod> strip1(NUMLEDS, PIN_STRIPE1);
+NeoPixelBrightnessBus<NeoGrbwFeature, NeoEsp32Rmt0800KbpsMethod> strip1(NUMLEDS, PIN_STRIPE1);
 
 /************ TFT Einstellungen ***************/
 
@@ -53,12 +53,12 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-//const char* host = "aquarium-webupdate";
+char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
-const char* host = "aquarium-webupdate-beta";
+//char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
+//const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
@@ -173,6 +173,7 @@ uint16_t Powerledfreq = 2000;
 uint8_t PowerledKanal = 1;
 uint8_t PowerledBit = 8;
 uint8_t Powerledwert = 0;
+uint8_t Powerledwert_virtuell = 0;
 uint8_t Powerledmax = 250;
 uint8_t Powerledmin = 0;
 
@@ -199,15 +200,15 @@ int SonAu1[4] = { 30,0,0,0 };
 int SonAu2[4] = { 150,5,0,0 };
 int SonAu3[4] = { 157,13,0,0 };
 int SonAu4[4] = { 163,21,1,0 };
-int SonAu5[4] = { 186,67,1,0 };
-int SonAu6[4] = { 240,120,30,100 };
-int SonAu7[4] = { 230,100,200,200 };
+int SonAu5[4] = { 200,30,60,0 };
+int SonAu6[4] = { 240,50,100,100 };
+int SonAu7[4] = { 230,60,240,200 };
 
 // Sonnenuntergang Color Array
 //				{ R, G, B, W }
-int SonUn1[4] = { 250,200,100,40 };
-int SonUn2[4] = { 240,255,30,0 };
-int SonUn3[4] = { 186,68,2,0 };
+int SonUn1[4] = { 250,60,100,40 };
+int SonUn2[4] = { 240,50,60,0 };
+int SonUn3[4] = { 200,30,40,0 };
 int SonUn4[4] = { 150,20,0,0 };
 int SonUn5[4] = { 50, 14,1, 0 };
 int SonUn6[4] = { 0, 0, 6, 0 };
@@ -223,8 +224,8 @@ uint8_t grnVal = 0;
 uint8_t bluVal = 0;
 uint8_t whiteVal = 0;
 
-uint16_t DurchWait = 100;
-uint16_t crossFadeWait;
+uint16_t DurchWait;
+unsigned long CrossLEDMillis = 0;
 
 uint8_t prevR = redVal;
 uint8_t prevG = grnVal;
@@ -235,7 +236,7 @@ uint8_t Durchlauf = 1;
 uint8_t SonneIndex = 0;
 uint8_t FutterIndex = 0;
 
-uint16_t StepWert = 1020;
+uint16_t StepWert = 256;
 
 
 
@@ -246,6 +247,7 @@ WidgetLED ledluefter(V22);
 WidgetLED ledheizung(V23);
 WidgetLED ledco2(V24);
 WidgetLED led(V25);
+
 
 /***** NTP Server abrufen für Local Time ********/
 
@@ -263,17 +265,18 @@ unsigned int localPort = 8888;  // local port to listen for UDP packets
 const int NTP_PACKET_SIZE = 48;		// NTP time is in the first 48 bytes of message
 byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
 
-time_t getNtpTime();
-void digitalClockDisplay();
-void sendNTPpacket(IPAddress& address);
+//time_t getNtpTime();
+//void digitalClockDisplay();
+//void sendNTPpacket(IPAddress& address);
 
-/***********************************************/
 
 /************** Funktionen *********************/
 
 #include <Funktionen.h>
 #include <tft.h>
 #include <timer.h>
+#include <blynkfunk.h>
+
 
 /************************** NTP code ********************************************/
 
@@ -282,20 +285,18 @@ time_t getNtpTime()
 	IPAddress ntpServerIP; // NTP server's ip address
 
 	while (Udp.parsePacket() > 0); // discard any previously received packets
-	Serial.println("Transmit NTP Request");
+	//Serial.println("Transmit NTP Request");
 	// get a random server from the pool
 	WiFi.hostByName(ntpServerName, ntpServerIP);
-	Serial.print(ntpServerName);
-	Serial.print(": ");
-	Serial.println(ntpServerIP);
+	//Serial.print(ntpServerName);
+	//Serial.print(": ");
+	//Serial.println(ntpServerIP);
 	sendNTPpacket(ntpServerIP);
 	uint32_t beginWait = millis();
 	while (millis() - beginWait < 1500) {
 		int size = Udp.parsePacket();
 		if (size >= NTP_PACKET_SIZE) {
-			Serial.println("Receive NTP Response");
-			tft.setTextColor(TFT_BLACK);
-			tft.drawString("Zeit Server :-(", 1, 5);
+			//Serial.println("Receive NTP Response");
 			Udp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
 			unsigned long secsSince1900;
 			// convert four bytes starting at location 40 to a long integer
@@ -308,16 +309,16 @@ time_t getNtpTime()
 
 		}
 	}
-	Serial.println("No NTP Response :-(");
+	//Serial.println("No NTP Response :-(");
 	tft.setTextColor(TFT_RED);
-	tft.drawString("0", 3, 2, 2);
-	tft.drawString("0", 12, 2, 2);
+	tft.drawString("8", 3, 2, 2);
+	tft.drawString("8", 12, 2, 2);
 	tft.drawString(":", 21, 2, 2);
-	tft.drawString("0", 25, 2, 2);
-	tft.drawString("0", 34, 2, 2);
+	tft.drawString("8", 25, 2, 2);
+	tft.drawString("8", 34, 2, 2);
 	tft.drawString(":", 43, 2, 2);
-	tft.drawString("0", 48, 2, 2);
-	tft.drawString("0", 57, 2, 2);
+	tft.drawString("8", 48, 2, 2);
+	tft.drawString("8", 57, 2, 2);
 
 	if (ntpWaitActual + 200 < ntpWaitMax) ntpWaitActual += 200; // expand wait time if necessary - I'm pretty aware of that this value will hardly reach ntpWaitMax with this simple condition.
 	setSyncInterval(syncIntervalAfterFail); // in both cases: no NTP response or no DNS lookup
@@ -364,7 +365,7 @@ void WIFI_login()
 
 void reconnectBlynk() 
 {
-	WIFI_TFT();
+	//WIFI_TFT();
 
 	if (!Blynk.connected()) {
 		if (Blynk.connect()) {
@@ -380,392 +381,10 @@ void reconnectBlynk()
 /********************************************************************************/
 
 
-
-/******* LED Timer Sonne Auf/Untergang *******/
-
-BLYNK_WRITE(V0) {
-	TimeInputParam t(param);
-
-	// Process start time
-
-	if (t.hasStartTime())
-	{
-		SoAuStd = t.getStartHour();
-		SoAuMin = t.getStartMinute();
-	}
-
-	if (t.hasStopTime())
-	{
-		SoUnStd = t.getStopHour();
-		SoUnMin = t.getStopMinute();
-	}
-
-	SunTimer();
-}
-
-/*********** LED Timer Mittagssonne ************/
-
-BLYNK_WRITE(V6) {
-	TimeInputParam t(param);
-
-	if (t.hasStartTime())
-	{
-		SoMiAnStd = t.getStartHour();
-		SoMiAnMin = t.getStartMinute();
-
-	}
-
-	if (t.hasStopTime())
-	{
-		SoMiAusStd = t.getStopHour();
-		SoMiAusMin = t.getStopMinute();
-
-	}
-}
-
-/************ LED Timer Nachtlicht *****************/
-
-BLYNK_WRITE(V11) {
-
-	TimeInputParam t(param);
-
-	if (t.hasStartTime())
-	{
-		SoNaStd = t.getStartHour();
-		SoNaMin = t.getStartMinute();
-	}
-}
-
-/**************** CO2 Timer ******************/
-
-BLYNK_WRITE(V4) {
-	TimeInputParam t(param);
-
-	// Process start time
-
-	if (t.hasStartTime())
-	{
-		CO2AnStd = t.getStartHour();
-		CO2AnMin = t.getStartMinute();
-	}
-
-	if (t.hasStopTime())
-	{
-		CO2AusStd = t.getStopHour();
-		CO2AusMin = t.getStopMinute();
-	}
-
-	CO2Timer();
-}
-
-/*************** Soll Temperatur ***********/
-
-BLYNK_WRITE(V2) {
-
-	Blynk.virtualWrite(V1, param.asFloat());
-	SollTemp = param.asFloat();
-}
-
-/******** Luefter **************************/
-
-BLYNK_WRITE(V20) {
-
-	Blynk.virtualWrite(V20, param.asFloat());
-	LuefTemp = param.asFloat();
-}
-
-/************* Durchlauf Zeit *************/
-
-BLYNK_WRITE(V5) {
-
-	Blynk.virtualWrite(V5, param.asFloat());
-	DurchWait = param.asFloat();
-}
-
-/******* Futterautomat ********************/
-
-BLYNK_WRITE(V7) {
-
-	TimeInputParam t(param);
-
-	if (t.hasStartTime())
-	{
-		FutterStd = t.getStartHour();
-		FutterMin = t.getStartMinute();
-	}
-
-	FutterTimer();
-}
-
-BLYNK_WRITE(V34) {
-
-	Blynk.virtualWrite(V34, param.asFloat());
-	Futterdauer = param.asFloat();
-	Futterdauer = Futterdauer * 1000;
-}
-
-BLYNK_WRITE(V35) {
-
-	Blynk.virtualWrite(V35, param.asFloat());
-	Futtergesch = param.asFloat();
-}
-
-/********** Temp Hysterese *****************/
-
-BLYNK_WRITE(V8) {
-
-	Blynk.virtualWrite(V8, param.asFloat());
-	Hysterese = param.asFloat();
-}
-
-/****** Maximale Helligkeit *****************/
-
-BLYNK_WRITE(V9) {
-
-	Blynk.virtualWrite(V9, param.asFloat());
-	maxHell = param.asFloat();
-}
-
-/******* Mittags Helligkeit *****************/
-
-BLYNK_WRITE(V25) {
-
-	Blynk.virtualWrite(V25, param.asFloat());
-	mittagHell = param.asFloat();
-}
-
-/******* PowerLED Max Hellighkeit *********/
-
-BLYNK_WRITE(V36) 
-{
-
-	Blynk.virtualWrite(V36, param.asFloat());
-	Powerledmax = param.asFloat();
-}
-
-/******* Aktuelle Helligkeit *****************/
-
-BLYNK_WRITE(V28) 
-{
-
-	Blynk.virtualWrite(V28, param.asFloat());
-	aktHell = param.asFloat();
-}
-
-/******** TFT Helligkeit ********************/
-
-BLYNK_WRITE(V10) 
-{
-
-	Blynk.virtualWrite(V10, param.asFloat());
-	BacklightwertTag = param.asFloat();
-	ledcWrite(BacklightKanalTFT, BacklightwertTag);
-}
-
-BLYNK_WRITE(V33) 
-{
-
-	Blynk.virtualWrite(V33, param.asFloat());
-	BacklightwertNacht = param.asFloat();
-	//ledcWrite(BacklightKanalTFT, BacklightwertNacht);
-}
-
-/****** TFT Rotation ************************/
-
-BLYNK_WRITE(V19) 
-{
-
-	int i = param.asInt();
-	if (i == 1) {
-		TFTRotation = 3;
-		delay(250);
-	}
-	else
-		TFTRotation = 1;
-
-	TFT_Layout();
-	
-	WIFI_TFT();
-	
-	CO2Timer();
-	
-	SunTimer();
-	
-	FutterTimer();
-	
-}
-
-/************ Manuelle Funktionen ************/
-
-BLYNK_WRITE(V12) 
-{ /*Sonne An*/
-
-	int i = param.asInt();
-	if (i == 1) {
-		SonneIndex = 1;
-		delay(250);
-	}
-}
-
-BLYNK_WRITE(V14) 
-{ /*Sonne Aus*/
-
-	int i = param.asInt();
-	if (i == 1) {
-		SonneIndex = 2;
-		delay(250);
-	}
-}
-
-BLYNK_WRITE(V13) 
-{ /*Sonne Mittag AN*/
-
-	int i = param.asInt();
-	if (i == 1) {
-		SonneMitAn();
-		delay(250);
-		
-	}
-}
-
-BLYNK_WRITE(V21) 
-{ /*Sonne Mittag Aus*/
-
-	int i = param.asInt();
-	if (i == 1) {
-		SonneMitAus();
-		delay(250);
-		
-	}
-}
-
-BLYNK_WRITE(V15) 
-{ /*Nachlicht Aus*/
-
-	int i = param.asInt();
-	if (i == 1) {
-		SonneIndex = 5;
-		delay(250);
-		SonneIndex = 0;
-	}
-}
-
-BLYNK_WRITE(V16) 
-{ /*Futterautomat*/
-
-
-	int i = param.asInt();
-	if (i == 1) {
-
-		FutterIndex = 1;
-	}
-	
-	/*ledcWrite(FutterKanal, Futtergesch);
-
-	delay(Futterdauer);
-
-	ledcWrite(FutterKanal, 0);*/
-
-}
-
-BLYNK_WRITE(V17) 
-{ /*Luefter*/
-
-	int i = param.asInt();
-	if (i == 1) {
-		digitalWrite(luefter, HIGH);
-		ledluefter.on();
-		delay(250);
-	}
-}
-
-
-/*********** System Neustart ************/
-
-BLYNK_WRITE(V18) 
-{
-
-	int i = param.asInt();
-	if (i == 1) {
-		ESP.restart();
-		delay(250);
-	}
-}
-
-/************* LED Farbe Manuell *******/
-
-BLYNK_WRITE(V29) 
-{
-	Blynk.virtualWrite(V29, param.asFloat());
-	LEDRot = param.asFloat();
-
-		/*for (int i = 0; i < NUMLEDS; i++) {
-
-			strip1.SetPixelColor(i, RgbwColor(LEDGruen, LEDRot, LEDBlau, LEDWeiss));
-		}*/
-}
-
-BLYNK_WRITE(V30) 
-{
-	Blynk.virtualWrite(V30, param.asFloat());
-	LEDBlau = param.asFloat();
-	/*
-		for (int i = 0; i < NUMLEDS; i++) {
-
-			strip1.SetPixelColor(i, RgbwColor(LEDGruen, LEDRot, LEDBlau, LEDWeiss));
-		}*/
-}
-
-BLYNK_WRITE(V31) 
-{
-	Blynk.virtualWrite(V31, param.asFloat());
-	LEDGruen = param.asFloat();
-	
-		/*for (int i = 0; i < NUMLEDS; i++) {
-
-			strip1.SetPixelColor(i, RgbwColor(LEDGruen, LEDRot, LEDBlau, LEDWeiss));
-		}*/
-	
-
-}
-
-BLYNK_WRITE(V32) 
-{
-	Blynk.virtualWrite(V32, param.asFloat());
-	LEDWeiss = param.asFloat();
-
-		/*for (int i = 0; i < NUMLEDS; i++) {
-
-			strip1.SetPixelColor(i, RgbwColor(LEDGruen, LEDRot, LEDBlau, LEDWeiss));
-		}*/
-}
-
-BLYNK_WRITE(V37 ) 
-{
-	//uint8_t Powerledmanu;
-	Blynk.virtualWrite(V37, param.asFloat());
-	Powerledwert = param.asFloat();
-	
-}
-
-BLYNK_WRITE(V38) 
-{
-
-	int i = param.asInt();
-	if (i == 1) {
-		for (int i = 0; i < NUMLEDS; i++) {
-			strip1.SetPixelColor(i, RgbwColor(LEDGruen, LEDRot, LEDBlau, LEDWeiss));
-			ledcWrite(PowerledKanal, Powerledwert);
-		}	
-	}
-}
-
-/*************************************************/
-
 void setup() 
 {
 
-	Serial.begin(9600);
+	Serial.begin(115200);
 
 	/********* TFT Layout setzen ***************/
 
@@ -876,7 +495,7 @@ void setup()
 	Udp.begin(localPort);
 	setSyncProvider(getNtpTime);
 	setSyncInterval(300);
-	digitalClockDisplay();
+	//digitalClockDisplay();
 
 }
 

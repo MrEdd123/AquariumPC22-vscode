@@ -6,7 +6,7 @@
 void PowerLEDplus()
 {
 	uint16_t PowerLEDFade;
-	PowerLEDFade = DurchWait * 50;
+	PowerLEDFade = DurchWait * 70;
 
 	if (millis() - PowerLEDMillis > PowerLEDFade)
 	{
@@ -32,7 +32,7 @@ void PowerLEDplus()
 void PowerLEDminus()
 {
 	uint16_t PowerLEDFade;
-	PowerLEDFade = DurchWait * 50;
+	PowerLEDFade = DurchWait * 70;
 	if (millis() - PowerLEDMillis > PowerLEDFade)
 	{
 		PowerLEDMillis = millis();
@@ -106,8 +106,11 @@ void crossFade(int color[4])
 	int stepB = calculateStep(prevB, (color[2] * 255) / 100);
 	int stepW = calculateStep(prevW, (color[3] * 255) / 100);
 
-	do
-	{ // Delay schleife f�r�s Fading
+	
+	if (millis() - CrossLEDMillis > DurchWait)
+	{
+	
+		CrossLEDMillis = millis();
 
 		if (LEDStep <= StepWert)
 		{
@@ -126,8 +129,7 @@ void crossFade(int color[4])
 
 			for (int i = 0; i < NUMLEDS; i++)
 			{
-
-				strip1.SetPixelColor(i, RgbwColor(grnVal, redVal, bluVal, whiteVal));
+				strip1.SetPixelColor(i, RgbwColor(redVal, grnVal, bluVal, whiteVal));
 			}
 
 			prevR = redVal; // Update current values for next loop
@@ -137,10 +139,13 @@ void crossFade(int color[4])
 
 			strip1.Show();
 
-			crossFadeWait = DurchWait;
 		}
-	} while (crossFadeWait == 0);
-	crossFadeWait--;
+
+	}
+
+	
+	
+	
 }
 
 void SonneAuf(void)
