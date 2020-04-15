@@ -52,12 +52,12 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-//const char* host = "aquarium-webupdate";
+char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
-const char* host = "aquarium-webupdate-beta";
+//char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
+//const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
