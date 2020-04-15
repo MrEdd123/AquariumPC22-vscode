@@ -8,18 +8,17 @@
 #include <HTTP_Method.h>
 #include <ArduinoOTA.h>
 #include "bitmaps.h"
-//#include <WiFi.h>
-#include <WiFiClient.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
-#include <BlynkSimpleEsp32.h>
+#include <BlynkSimpleEsp32_SSL.h>
 #include <Time.h>
 #include <SPI.h>
 #include <NeoPixelBrightnessBus.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Preferences.h>
-
 
 /*********** EEPROM Speichern ********************/
 
@@ -53,17 +52,17 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-const char* host = "aquarium-webupdate";
+//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+//const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-//char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
-//const char* host = "aquarium-webupdate-beta";
+char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
+const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
 
-bool Connected2Blynk = false;
+//bool Connected2Blynk = false;
 
 char serverblynk[] = "blynk-cloud.com";
 unsigned int port = 8442;
@@ -129,11 +128,11 @@ uint8_t SoMiAnMin = 00;
 uint8_t SoMiAusStd = 15;
 uint8_t SoMiAusMin = 00;
 
-uint8_t FutterStd = 19;
+uint8_t FutterStd = 00;
 uint8_t FutterMin = 00;
 
 uint8_t maxHell = 250;
-uint8_t minHell;
+uint8_t minHell = 0;
 uint8_t mittagHell = 5;
 uint8_t aktHell = 200;
 
@@ -152,7 +151,6 @@ uint16_t Zeit;
 uint8_t AblaufX = 0;
 uint8_t AblaufY = 159;
 uint8_t AblaufI = 0;
-uint8_t AblaufBlynk;
 
 uint8_t BacklightPin = 22;
 uint16_t BacklightFrequenz = 500;
@@ -342,16 +340,19 @@ void WIFI_login()
 		WiFi.begin(ssid, pass);
 		Blynk.config(auth);
 		Blynk.connect();
+		//Blynk.syncAll();
 		while (WiFi.status() != WL_CONNECTED)
 		{
 			delay(500);
 			Serial.print(".");
+			tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
 		}
 		
 		Serial.println(" connected");
 		Serial.print("local IP:");
 		Serial.println(WiFi.localIP());
-		Blynk.syncAll();								  // Werte aus Blynk Cloud laden
+		WIFI_TFT();
+		
 	}
 
 	if (wifi_retry >= 11) {
@@ -362,22 +363,6 @@ void WIFI_login()
 
 }
 
-
-void reconnectBlynk() 
-{
-	//WIFI_TFT();
-
-	if (!Blynk.connected()) {
-		if (Blynk.connect()) {
-			tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
-		}
-		else {
-			tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
-			delay(2);
-			Blynk.begin(auth, ssid, pass);
-		}
-	}
-}
 /********************************************************************************/
 
 
@@ -395,12 +380,59 @@ void setup()
 	pinMode(co2, OUTPUT);
 
 
+	/************** EEPROM auslesen **************/
+
+	preferences.begin("aq", false);                         //Ordner az anlegen/verwenden
+
+  	//preferences.clear();                                  //Alle "Dateien" unter dem Ordner aq löschen
+
+ 	//preferences.remove("aq");                          	// EEPROM Datei "StartS" löschen
+	SoAuStd = preferences.getUInt("StartS", 0); 			
+	SoAuMin = preferences.getUInt("StartM", 0);
+	SoUnStd = preferences.getUInt("StopS", 0);
+	SoUnMin = preferences.getUInt("StopM", 0);
+	BacklightwertNacht = preferences.getUInt("BackLN", 0);
+	BacklightwertTag = preferences.getUInt("BackLT", 0);
+	TFTRotation = preferences.getInt("TFTR", 0);
+	FutterStd = preferences.getUInt("FuttS", 0);
+	FutterMin = preferences.getUInt("FuttM", 0);
+	DurchWait = preferences.getUInt("Wait", 0);
+	Hysterese = preferences.getFloat("Hyst", 0);
+	maxHell = preferences.putUInt("MaxH", 0);
+	mittagHell = preferences.putUInt("MitH", 0);
+	Powerledmax = preferences.putUInt("PowH", 0);
+	Futterdauer = preferences.getUInt("FutD", 0);
+	Futtergesch = preferences.getUInt("FutG", 0);
+	SollTemp = preferences.getUInt("SollT", 0);
+	LuefTemp = preferences.getUInt("LueT", 0);
+	CO2AnStd = preferences.getUInt("COSS", 0);
+	CO2AnMin = preferences.getUInt("COSM", 0);
+	CO2AusStd = preferences.getUInt("COAS", 0);
+	CO2AusMin = preferences.getUInt("COAM", 0);
+	SoNaStd = preferences.getUInt("NaLS", 0);
+	SoNaMin = preferences.getUInt("NaLM", 0);
+	SoMiAusStd = preferences.getUInt("MiAuLS", 0);
+	SoMiAusMin = preferences.getUInt("MIAuLM", 0);
+	SoMiAnStd = preferences.getUInt("MiAnLS", 0);
+	SoMiAnMin = preferences.getUInt("MIAnLM", 0);
+
+
+	CO2Timer();
+	SunTimer();
+	FutterTimer();
+	
+
 	/**** Alarm Timer setzen für Funktionen ******/ 
 
 	//Timer.setInterval(1000, digitalClockDisplay);
 	Timer.setInterval(1000, ProgrammTimer);
 	Timer.setInterval(5000, Heizung);
 
+	///******** Blynk Verbinden / WIFI Verbinden **********/
+	WIFI_login();
+	//WIFI_TFT();
+	//Blynk.begin(auth,ssid,pass);
+	//Blynk.syncAll();	// Werte aus Blynk Cloud laden
 
 	/******* Blynk LCD löschen ******************/
 
@@ -424,6 +456,7 @@ void setup()
 
 	ledcSetup(BacklightKanalTFT, BacklightFrequenz, BacklightBit);	//ledcSetup(Kanal, Frequenz, Bit);
 	ledcAttachPin(BacklightPin, BacklightKanalTFT);					//ledcAttachPin(Pin, Kanal);
+	ledcWrite(BacklightKanalTFT, BacklightwertTag);
 
 	/******** Futterautomat *******************/
 
@@ -436,12 +469,7 @@ void setup()
 	ledcAttachPin(PowerledPin, PowerledKanal);
 
 	
-	///******** Blynk Verbinden / WIFI Verbinden **********/
-	//WIFI_login();
-
-	Blynk.begin(auth, ssid, pass);
-
-	Blynk.syncAll();								  // Werte aus Blynk Cloud laden
+	
 
 
 	/*************** WEB Server für OTA *******/
@@ -504,12 +532,17 @@ time_t prevDisplay = 0;						// when the digital clock was displayed
 void loop() 
 {
 
+
+
 	Blynk.run();
 	Timer.run();
 	server.handleClient();
 
 	strip1.SetBrightness(aktHell);
 	strip1.Show();
+
+	
+	
 
 
 	/************* Uhr im Display aktualisieren ********/
