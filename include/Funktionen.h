@@ -22,7 +22,9 @@ void PowerLEDplus()
 		}
 
 		/*Serial.print("PowerLED++ ");
-			Serial.println(Powerledwert);	
+			Serial.print(Powerledwert);
+			Serial.print("  ");
+			Serial.println(Powerledmax);	
 			Serial.print(DurchWait);
 			Serial.print("  ");
 			Serial.println(PowerLEDFade);*/
@@ -197,7 +199,7 @@ void SonneAuf(void)
 		break;
 
 	case 9:
-		//Serial.println("Case9 Ende");
+		Serial.println("Case9 Ende");
 		Durchlauf = 1;
 		SonneIndex = 0;
 		AblaufX = 1;
@@ -339,15 +341,9 @@ void SonneNaAus(void)
 
 void Heizung(void)
 {
-
-	//portDISABLE_INTERRUPTS();
 	Tempfueh.requestTemperatures();
 	IstTemp = (Tempfueh.getTempCByIndex(0));
-	//Serial.println(IstTemp);
-	//portENABLE_INTERRUPTS();
 	lcd.print(0, 1, IstTemp);
-	//lcd.print(6, 1, "C");
-	//lcd.print(7, 1,(char)178);
 	tft.setTextColor(TFT_WHITE, TFT_BLACK);
 	tft.drawFloat(SollTemp, 1, 27, 47, 2); //SollWert in TFT einblenden
 	if (IstTemp > -127)

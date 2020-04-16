@@ -9,8 +9,6 @@ BLYNK_WRITE(V0)
 {
 	TimeInputParam t(param);
 
-	// Process start time
-
 	if (t.hasStartTime())
 	{
 		uint8_t SoAuStdEE;
@@ -19,7 +17,7 @@ BLYNK_WRITE(V0)
 		preferences.putUInt("StartS", SoAuStdEE);
 		SoAuMinEE = t.getStartMinute();
 		preferences.putUInt("StartM", SoAuMinEE);
-		SoAuStd = preferences.getUInt("StartS", 0); 			//"Datei" Start auslesen und in Variable counter schreiben	
+		SoAuStd = preferences.getUInt("StartS", 0);
 		SoAuMin = preferences.getUInt("StartM", 0);
 	}
 
@@ -88,8 +86,6 @@ BLYNK_WRITE(V11) {
 BLYNK_WRITE(V4) {
 	TimeInputParam t(param);
 
-	// Process start time
-
 	if (t.hasStartTime())
 	{
 		CO2AnStd = t.getStartHour();
@@ -139,7 +135,7 @@ BLYNK_WRITE(V5) {
 
 	Blynk.virtualWrite(V5, param.asFloat());
 	DurchWait = param.asFloat();
-	preferences.putUInt("Wait", DurchWait);
+	preferences.putUInt ("Wait", DurchWait);
 	DurchWait = preferences.getUInt("Wait", 0);
 }
 
@@ -195,8 +191,8 @@ BLYNK_WRITE(V9) {
 
 	Blynk.virtualWrite(V9, param.asFloat());
 	maxHell = param.asFloat();
-	preferences.getUInt("MaxH", maxHell);
-	maxHell = preferences.putUInt("MaxH", 0);
+	preferences.putUInt("MaxH", maxHell);
+	maxHell = preferences.getUInt("MaxH", 0);
 }
 
 /******* Mittags Helligkeit *****************/
@@ -205,8 +201,8 @@ BLYNK_WRITE(V25) {
 
 	Blynk.virtualWrite(V25, param.asFloat());
 	mittagHell = param.asFloat();
-	preferences.getUInt("MitH", mittagHell);
-	mittagHell = preferences.putUInt("MitH", 0);
+	preferences.putUInt("MitH", mittagHell);
+	mittagHell = preferences.getUInt("MitH", 0);
 }
 
 /******* PowerLED Max Hellighkeit *********/
@@ -216,8 +212,8 @@ BLYNK_WRITE(V36)
 
 	Blynk.virtualWrite(V36, param.asFloat());
 	Powerledmax = param.asFloat();
-	preferences.getUInt("PowH", Powerledmax);
-	Powerledmax = preferences.putUInt("PowH", 0);
+	preferences.putUInt ("PowH", Powerledmax);
+	Powerledmax = preferences.getUInt("PowH", 0);
 }
 
 /******* Aktuelle Helligkeit *****************/
@@ -339,13 +335,7 @@ BLYNK_WRITE(V16)
 	if (i == 1) {
 
 		FutterIndex = 1;
-	}
-	
-	/*ledcWrite(FutterKanal, Futtergesch);
-
-	delay(Futterdauer);
-
-	ledcWrite(FutterKanal, 0);*/
+	}	
 
 }
 
@@ -379,50 +369,31 @@ BLYNK_WRITE(V29)
 {
 	Blynk.virtualWrite(V29, param.asFloat());
 	LEDRot = param.asFloat();
-
-		/*for (int i = 0; i < NUMLEDS; i++) {
-
-			strip1.SetPixelColor(i, RgbwColor(LEDGruen, LEDRot, LEDBlau, LEDWeiss));
-		}*/
+		
 }
 
 BLYNK_WRITE(V30) 
 {
 	Blynk.virtualWrite(V30, param.asFloat());
-	LEDBlau = param.asFloat();
-	/*
-		for (int i = 0; i < NUMLEDS; i++) {
-
-			strip1.SetPixelColor(i, RgbwColor(LEDGruen, LEDRot, LEDBlau, LEDWeiss));
-		}*/
+	LEDBlau = param.asFloat();	
 }
 
 BLYNK_WRITE(V31) 
 {
 	Blynk.virtualWrite(V31, param.asFloat());
-	LEDGruen = param.asFloat();
-	
-		/*for (int i = 0; i < NUMLEDS; i++) {
-
-			strip1.SetPixelColor(i, RgbwColor(LEDGruen, LEDRot, LEDBlau, LEDWeiss));
-		}*/
-	
-
+	LEDGruen = param.asFloat();	
 }
 
 BLYNK_WRITE(V32) 
 {
 	Blynk.virtualWrite(V32, param.asFloat());
 	LEDWeiss = param.asFloat();
-
 }
 
 BLYNK_WRITE(V37 ) 
-{
-	
+{	
 	Blynk.virtualWrite(V37, param.asFloat());
-	Powerledwert_virtuell = param.asFloat();
-	
+	Powerledwert_virtuell = param.asFloat();	
 }
 
 BLYNK_WRITE(V38) 
@@ -431,9 +402,9 @@ BLYNK_WRITE(V38)
 	int i = param.asInt();
 	if (i == 1) {
 		for (int i = 0; i < NUMLEDS; i++) {
-			strip1.SetPixelColor(i, RgbwColor(LEDGruen, LEDRot, LEDBlau, LEDWeiss));
-			Powerledwert = Powerledwert_virtuell;
-			ledcWrite(PowerledKanal, Powerledwert);
+			strip1.SetPixelColor(i, RgbwColor(LEDRot, LEDGruen, LEDBlau, LEDWeiss));
+			//Powerledwert = Powerledwert_virtuell;
+			ledcWrite(PowerledKanal, Powerledwert_virtuell);
 		}	
 	}
 }

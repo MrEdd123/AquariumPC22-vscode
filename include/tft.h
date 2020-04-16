@@ -64,9 +64,7 @@ void TFT_Layout()
 void digitalClockDisplay() 
 {
 
-	//char readable[20]; // declare a char buffer large enough for your output
-
-	uint32_t local_t = nowLocal(); //f�r Zeitumstellung n�tig
+	uint32_t local_t = nowLocal();
 
 	tft.setTextColor(TFT_GREEN, TFT_BLACK);
 	if (hour(local_t) < 10) {
@@ -154,9 +152,7 @@ void FutterTimer()
 {
 
 	tft.setTextSize(1);
-	//tft.setCursor(104, 74);
 	tft.setTextColor(TFT_WHITE, TFT_BLACK);
-	//tft.print("Ein");
 	tft.setCursor(120, 74);
 	if (FutterStd < 10)
 		tft.print("0");
@@ -170,7 +166,6 @@ void FutterTimer()
 
 void WIFI_TFT() 
 {
-	//int wifi_ctr = 0;
 	while (WiFi.status() != WL_CONNECTED) {
 		delay(500);
 		tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);

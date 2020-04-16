@@ -1,6 +1,8 @@
 ﻿
 //#define BLYNK_PRINT Serial
 
+
+
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 #include <NeoPixelAnimator.h>
@@ -52,17 +54,16 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-const char* host = "aquarium-webupdate";
+//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+//const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
-//char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
-//const char* host = "aquarium-webupdate-beta";
+
+char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
+const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
-
-//bool Connected2Blynk = false;
 
 char serverblynk[] = "blynk-cloud.com";
 unsigned int port = 8442;
@@ -222,7 +223,7 @@ uint8_t grnVal = 0;
 uint8_t bluVal = 0;
 uint8_t whiteVal = 0;
 
-uint16_t DurchWait;
+uint16_t DurchWait = 180;
 unsigned long CrossLEDMillis = 0;
 
 uint8_t prevR = redVal;
@@ -235,8 +236,6 @@ uint8_t SonneIndex = 0;
 uint8_t FutterIndex = 0;
 
 uint16_t StepWert = 256;
-
-
 
 /******** BLYNK FUNKTIONEN  ********************/
 
@@ -262,11 +261,6 @@ unsigned int localPort = 8888;  // local port to listen for UDP packets
 
 const int NTP_PACKET_SIZE = 48;		// NTP time is in the first 48 bytes of message
 byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
-
-//time_t getNtpTime();
-//void digitalClockDisplay();
-//void sendNTPpacket(IPAddress& address);
-
 
 /************** Funktionen *********************/
 
@@ -398,9 +392,9 @@ void setup()
 	FutterMin = preferences.getUInt("FuttM", 0);
 	DurchWait = preferences.getUInt("Wait", 0);
 	Hysterese = preferences.getFloat("Hyst", 0);
-	maxHell = preferences.putUInt("MaxH", 0);
-	mittagHell = preferences.putUInt("MitH", 0);
-	Powerledmax = preferences.putUInt("PowH", 0);
+	maxHell = preferences.getUInt("MaxH", 0);
+	mittagHell = preferences.getUInt("MitH", 0);
+	Powerledmax = preferences.getUInt("PowH", 0);
 	Futterdauer = preferences.getUInt("FutD", 0);
 	Futtergesch = preferences.getUInt("FutG", 0);
 	SollTemp = preferences.getUInt("SollT", 0);
@@ -429,9 +423,11 @@ void setup()
 	Timer.setInterval(5000, Heizung);
 
 	///******** Blynk Verbinden / WIFI Verbinden **********/
+
 	WIFI_login();
-	//WIFI_TFT();
+
 	//Blynk.begin(auth,ssid,pass);
+
 	//Blynk.syncAll();	// Werte aus Blynk Cloud laden
 
 	/******* Blynk LCD löschen ******************/
@@ -467,9 +463,6 @@ void setup()
 
 	ledcSetup(PowerledKanal, Powerledfreq, PowerledBit);
 	ledcAttachPin(PowerledPin, PowerledKanal);
-
-	
-	
 
 
 	/*************** WEB Server für OTA *******/
@@ -523,16 +516,13 @@ void setup()
 	Udp.begin(localPort);
 	setSyncProvider(getNtpTime);
 	setSyncInterval(300);
-	//digitalClockDisplay();
+	digitalClockDisplay();
 
 }
 
-time_t prevDisplay = 0;						// when the digital clock was displayed
 
 void loop() 
 {
-
-
 
 	Blynk.run();
 	Timer.run();
@@ -540,9 +530,6 @@ void loop()
 
 	strip1.SetBrightness(aktHell);
 	strip1.Show();
-
-	
-	
 
 
 	/************* Uhr im Display aktualisieren ********/
@@ -572,7 +559,6 @@ void loop()
 		SonneNaAus();
 		break;
 	}
-
 
 	switch (FutterIndex)
 	{
