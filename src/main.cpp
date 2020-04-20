@@ -54,13 +54,13 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-//const char* host = "aquarium-webupdate";
+char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
 
-char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
-const char* host = "aquarium-webupdate-beta";
+//char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
+//const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina-EXT";
 char pass[] = "sommer12";
@@ -322,31 +322,19 @@ time_t getNtpTime()
 
 void WIFI_login() 
 {
-
 	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
 	Serial.println("WiFi Login");
 	while (WiFi.status() != WL_CONNECTED && wifi_retry <= 10) {
 		wifi_retry++;
-		WiFi.persistent(false);   // daten nicht in Flash speichern
-		WiFi.mode(WIFI_STA);
-		Serial.printf("Connecting to %s ", ssid);
 		tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
+		WiFi.persistent(false);   // daten nicht in Flash speichern
+		WiFi.disconnect();
+      	WiFi.mode(WIFI_OFF);
+      	WiFi.mode(WIFI_STA);
 		WiFi.begin(ssid, pass);
 		Blynk.config(auth);
 		Blynk.connect();
-		//Blynk.syncAll();
-		while (WiFi.status() != WL_CONNECTED)
-		{
-			delay(500);
-			Serial.print(".");
-			tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
-		}
-		
-		Serial.println(" connected");
-		Serial.print("local IP:");
-		Serial.println(WiFi.localIP());
-		WIFI_TFT();
-		
+		//Blynk.syncAll();		
 	}
 
 	if (wifi_retry >= 11) {
@@ -523,7 +511,8 @@ void setup()
 
 void loop() 
 {
-
+	
+	WIFI_login();
 	Blynk.run();
 	Timer.run();
 	server.handleClient();
