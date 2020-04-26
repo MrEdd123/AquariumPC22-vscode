@@ -10,7 +10,7 @@
 #include <HTTP_Method.h>
 #include <ArduinoOTA.h>
 #include "bitmaps.h"
-#include <WiFi.h>
+//#include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
@@ -62,7 +62,7 @@ BlynkTimer Timer;
 char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
 const char* host = "aquarium-webupdate-beta";
 
-char ssid[] = "Andre+Janina-EXT";
+char ssid[] = "Andre+Janina";
 char pass[] = "sommer12";
 
 char serverblynk[] = "blynk-cloud.com";
@@ -252,8 +252,8 @@ static const char ntpServerName[] = "de.pool.ntp.org";
 const int timeZone = 1;
 
 const uint32_t syncIntervalMax = 300; // could be the same value like the syncInterval in time.cpp | 300
-const uint32_t syncIntervalAfterFail = 60; // if sync with NTP fails, retry earlier | 60
-const uint32_t ntpWaitMax = 900; // maximum time in ms to wait for an answer of NTP Server, most used value 1500 I prefere below one second: 900
+const uint32_t syncIntervalAfterFail = 30; // if sync with NTP fails, retry earlier | 60
+const uint32_t ntpWaitMax = 1500; // maximum time in ms to wait for an answer of NTP Server, most used value 1500 I prefere below one second: 900
 uint32_t ntpWaitActual = ntpWaitMax; // optimized/reduced wait time, start with maximum.
 
 WiFiUDP Udp;
@@ -302,6 +302,8 @@ time_t getNtpTime()
 		}
 	}
 	//Serial.println("No NTP Response :-(");
+	tft.setTextColor(TFT_BLACK);
+	tft.drawString("           ", 3, 2, 2);
 	tft.setTextColor(TFT_RED);
 	tft.drawString("8", 3, 2, 2);
 	tft.drawString("8", 12, 2, 2);
@@ -318,35 +320,24 @@ time_t getNtpTime()
 	return 0; // return 0 if unable to get the time
 }
 
-
-
 void WIFI_login() 
 {
-
-	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
+	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
 	Serial.println("WiFi Login");
 	while (WiFi.status() != WL_CONNECTED && wifi_retry <= 10) {
 		wifi_retry++;
 		WiFi.persistent(false);   // daten nicht in Flash speichern
 		WiFi.mode(WIFI_STA);
-		Serial.printf("Connecting to %s ", ssid);
-		tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
+		Serial.printf("Connecting to %s ", ssid);	
 		WiFi.begin(ssid, pass);
 		Blynk.config(auth);
 		Blynk.connect();
+		tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
 		//Blynk.syncAll();
-		while (WiFi.status() != WL_CONNECTED)
+		/*while (WiFi.status() == WL_CONNECTED)
 		{
-			delay(500);
-			Serial.print(".");
-			tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
-		}
-		
-		Serial.println(" connected");
-		Serial.print("local IP:");
-		Serial.println(WiFi.localIP());
-		WIFI_TFT();
-		
+			tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
+		}*/	
 	}
 
 	if (wifi_retry >= 11) {
@@ -354,8 +345,8 @@ void WIFI_login()
 		Serial.println("\nReboot");
 		ESP.restart();
 	}
-
 }
+
 
 /********************************************************************************/
 
@@ -365,16 +356,22 @@ void setup()
 
 	Serial.begin(115200);
 
-	/********* TFT Layout setzen ***************/
+	/************ TFT Layout setzen ***************/  
 
 	TFT_Layout();
+
+	/***** Blynk Verbinden / WIFI Verbinden *******/
+
+	WIFI_login();
+
+	/*********** GPIO´s definieren ****************/
 
 	pinMode(heizung, OUTPUT);
 	pinMode(luefter, OUTPUT);
 	pinMode(co2, OUTPUT);
 
 
-	/************** EEPROM auslesen **************/
+	/************** EEPROM auslesen ***************/
 
 	preferences.begin("aq", false);                         //Ordner az anlegen/verwenden
 
@@ -420,15 +417,7 @@ void setup()
 
 	//Timer.setInterval(1000, digitalClockDisplay);
 	Timer.setInterval(1000, ProgrammTimer);
-	Timer.setInterval(5000, Heizung);
-
-	///******** Blynk Verbinden / WIFI Verbinden **********/
-
-	WIFI_login();
-
-	//Blynk.begin(auth,ssid,pass);
-
-	//Blynk.syncAll();	// Werte aus Blynk Cloud laden
+	Timer.setInterval(1000, Heizung);
 
 	/******* Blynk LCD löschen ******************/
 
@@ -446,7 +435,7 @@ void setup()
 	/************ Tempfuehler *******************/
 
 	Tempfueh.begin();
-	Tempfueh.setResolution(12);			// 0.25 Grad Genauigkeit
+	Tempfueh.setResolution(10);			// 0.25 Grad Genauigkeit
 
 	/******** TFT Backlight *******************/
 
@@ -467,7 +456,8 @@ void setup()
 
 	/*************** WEB Server für OTA *******/
 
-	if (WiFi.waitForConnectResult() == WL_CONNECTED) {
+	if (WiFi.waitForConnectResult() == WL_CONNECTED) 
+	{
 		MDNS.begin(host);
 		server.on("/", HTTP_GET, []() {
 			server.sendHeader("Connection", "close");
@@ -506,7 +496,9 @@ void setup()
 
 		Serial.printf("Ready! Open http://%s.local in your browser\n", host);
 	}
-	else {
+
+	else
+	{
 		Serial.println("WiFi Failed");
 	}
 
@@ -538,6 +530,7 @@ void loop()
 	{
 		digitalClockDisplay();
 	}
+	
 	
 	/******** Schalter für Beleuchtung ********/
 

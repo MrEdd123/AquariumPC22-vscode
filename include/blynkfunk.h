@@ -161,8 +161,8 @@ BLYNK_WRITE(V7) {
 BLYNK_WRITE(V34) {
 
 	Blynk.virtualWrite(V34, param.asFloat());
-	Futterdauer = param.asFloat();
-	Futterdauer = Futterdauer * 1000;
+	Futterdauer = param.asFloat() * 1000;
+	//Futterdauer = Futterdauer * 1000;
 	preferences.putUInt("FutD", Futterdauer);
 	Futterdauer = preferences.getUInt("FutD", 0);
 }
@@ -332,8 +332,8 @@ BLYNK_WRITE(V16)
 
 
 	int i = param.asInt();
-	if (i == 1) {
-
+	if (i == 1) 
+	{
 		FutterIndex = 1;
 	}	
 

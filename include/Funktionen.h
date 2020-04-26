@@ -398,13 +398,17 @@ void Futterautomat(void)
 		FutterMillis = millis();
 
 		ledcWrite(FutterKanal, Futtergesch);
-	
-		if (i == (Futterdauer + 1))
+		Serial.println(i);
+		//if (i > Futterdauer)
+		if (i > Futterdauer && i < (Futterdauer + 5 ))
 		{
+			Serial.print("Stop");
+			Serial.println(i);
 			ledcWrite(FutterKanal, 0);
 			FutterIndex = 0;
 		}
 	}
+
 }
 
 /********************************************/

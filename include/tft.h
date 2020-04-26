@@ -59,6 +59,8 @@ void TFT_Layout()
 
 	tft.drawRect(0, 115, 160, 13, TFT_WHITE);
 
+	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
+
 }
 
 void digitalClockDisplay() 
