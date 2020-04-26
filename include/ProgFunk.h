@@ -1,7 +1,7 @@
 // Funktionen.h
 
-#ifndef _FUNKTIONEN_h
-#define _FUNKTIONEN_h
+#ifndef _ProgFunk_h
+#define _ProgFunk_h
 
 void PowerLEDplus()
 {
@@ -342,7 +342,7 @@ void SonneNaAus(void)
 void Heizung(void)
 {
 	Tempfueh.requestTemperatures();
-	IstTemp = (Tempfueh.getTempCByIndex(0));
+	IstTemp = Tempfueh.getTempC();
 	lcd.print(0, 1, IstTemp);
 	tft.setTextColor(TFT_WHITE, TFT_BLACK);
 	tft.drawFloat(SollTemp, 1, 27, 47, 2); //SollWert in TFT einblenden

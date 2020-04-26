@@ -1,26 +1,30 @@
 ﻿
-//#define BLYNK_PRINT Serial
-
-
+#define BLYNK_PRINT Serial
 
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 #include <NeoPixelAnimator.h>
-//#include <TimeAlarms.h>
-#include <HTTP_Method.h>
-#include <ArduinoOTA.h>
 #include "bitmaps.h"
-//#include <WiFi.h>
-#include <WiFiClientSecure.h>
-#include <WebServer.h>
 #include <ESPmDNS.h>
 #include <BlynkSimpleEsp32_SSL.h>
 #include <Time.h>
 #include <SPI.h>
 #include <NeoPixelBrightnessBus.h>
 #include <OneWire.h>
-#include <DallasTemperature.h>
+#include <DS18B20.h>
 #include <Preferences.h>
+#include <PageBuilder.h>
+
+#include <WiFi.h>
+//#include <WiFiClientSecure.h>
+#include <WebServer.h>
+typedef WebServer WiFiWebServer;
+#include <EEPROM.h> 
+#include <AutoConnect.h>
+#define EXTERNAL_SWITCH_PIN 21
+WiFiWebServer server;
+AutoConnect portal(server);
+AutoConnectConfig config;
 
 /*********** EEPROM Speichern ********************/
 
@@ -41,8 +45,11 @@ TFT_eSPI tft = TFT_eSPI();
 /************* One Wire (Tempfühler) **********/
 
 #define ONE_WIRE_BUS			26				// Anschlusspin für OneWire			
-OneWire oneWire(ONE_WIRE_BUS);					// One Wire Setup
-DallasTemperature Tempfueh(&oneWire);			// Pass our oneWire reference to Dallas Temperature.
+//DS18B20 (ONE_WIRE_BUS);					// One Wire Setup
+OneWire oneWire(ONE_WIRE_BUS);
+DS18B20 Tempfueh(&oneWire);
+
+//DallasTemperature Tempfueh(&oneWire);			// Pass our oneWire reference to Dallas Temperature.
 
 
 /**********************************************/
@@ -54,13 +61,13 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-const char* host = "aquarium-webupdate";
+//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+//const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
 
-//char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
-//const char* host = "aquarium-webupdate-beta";
+char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
+const char* host = "aquarium-webupdate-beta";
 
 char ssid[] = "Andre+Janina";
 char pass[] = "sommer12";
@@ -68,46 +75,7 @@ char pass[] = "sommer12";
 char serverblynk[] = "blynk-cloud.com";
 unsigned int port = 8442;
 
-/*************** WEB Server für OTA **************/
 
-//const char* host = "aquarium-webupdate";
-
-WebServer server(80);
-const char* serverIndex = "<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>"
-"<form method='POST' action='#' enctype='multipart/form-data' id='upload_form'>"
-"<input type='file' name='update'>"
-"<input type='submit' value='Update'>"
-"</form>"
-"<div id='prg'>progress: 0%</div>"
-"<script>"
-"$('form').submit(function(e){"
-"e.preventDefault();"
-"var form = $('#upload_form')[0];"
-"var data = new FormData(form);"
-" $.ajax({"
-"url: '/update',"
-"type: 'POST',"
-"data: data,"
-"contentType: false,"
-"processData:false,"
-"xhr: function() {"
-"var xhr = new window.XMLHttpRequest();"
-"xhr.upload.addEventListener('progress', function(evt) {"
-"if (evt.lengthComputable) {"
-"var per = evt.loaded / evt.total;"
-"$('#prg').html('progress: ' + Math.round(per*100) + '%');"
-"}"
-"}, false);"
-"return xhr;"
-"},"
-"success:function(d, s) {"
-"console.log('success!')"
-"},"
-"error: function (a, b, c) {"
-"}"
-"});"
-"});"
-"</script>";
 
 /******* Variablen *******************************/
 
@@ -277,18 +245,18 @@ time_t getNtpTime()
 	IPAddress ntpServerIP; // NTP server's ip address
 
 	while (Udp.parsePacket() > 0); // discard any previously received packets
-	//Serial.println("Transmit NTP Request");
+	Serial.println("Transmit NTP Request");
 	// get a random server from the pool
 	WiFi.hostByName(ntpServerName, ntpServerIP);
-	//Serial.print(ntpServerName);
-	//Serial.print(": ");
-	//Serial.println(ntpServerIP);
+	Serial.print(ntpServerName);
+	Serial.print(": ");
+	Serial.println(ntpServerIP);
 	sendNTPpacket(ntpServerIP);
 	uint32_t beginWait = millis();
 	while (millis() - beginWait < 1500) {
 		int size = Udp.parsePacket();
 		if (size >= NTP_PACKET_SIZE) {
-			//Serial.println("Receive NTP Response");
+			Serial.println("Receive NTP Response");
 			Udp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
 			unsigned long secsSince1900;
 			// convert four bytes starting at location 40 to a long integer
@@ -324,14 +292,16 @@ void WIFI_login()
 {
 	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
 	Serial.println("WiFi Login");
+	Blynk.config(auth);
+	Blynk.connect();
 	while (WiFi.status() != WL_CONNECTED && wifi_retry <= 10) {
 		wifi_retry++;
 		tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
-		WiFi.persistent(false);   // daten nicht in Flash speichern
-		WiFi.disconnect();
-      	WiFi.mode(WIFI_OFF);
-      	WiFi.mode(WIFI_STA);
-		WiFi.begin(ssid, pass);
+		//WiFi.persistent(false);   // daten nicht in Flash speichern
+		//WiFi.disconnect();
+      	//WiFi.mode(WIFI_OFF);
+      	//WiFi.mode(WIFI_STA);
+		//WiFi.begin(ssid, pass);
 		Blynk.config(auth);
 		Blynk.connect();
 		//Blynk.syncAll();		
@@ -343,8 +313,6 @@ void WIFI_login()
 		ESP.restart();
 	}
 }
-
-
 /********************************************************************************/
 
 
@@ -352,14 +320,22 @@ void setup()
 {
 
 	Serial.begin(115200);
-
 	/************ TFT Layout setzen ***************/  
 
 	TFT_Layout();
 
 	/***** Blynk Verbinden / WIFI Verbinden *******/
 
-	WIFI_login();
+  	config.ota = AC_OTA_BUILTIN;
+  	portal.config(config);
+
+	if (portal.begin()) 
+	{
+    Serial.println("WiFi connected: " + WiFi.localIP().toString());
+	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
+	Blynk.config(auth);
+	Blynk.connect();
+  	}
 
 	/*********** GPIO´s definieren ****************/
 
@@ -450,56 +426,6 @@ void setup()
 	ledcSetup(PowerledKanal, Powerledfreq, PowerledBit);
 	ledcAttachPin(PowerledPin, PowerledKanal);
 
-
-	/*************** WEB Server für OTA *******/
-
-	if (WiFi.waitForConnectResult() == WL_CONNECTED) 
-	{
-		MDNS.begin(host);
-		server.on("/", HTTP_GET, []() {
-			server.sendHeader("Connection", "close");
-			server.send(200, "text/html", serverIndex);
-			});
-		server.on("/update", HTTP_POST, []() {
-			server.sendHeader("Connection", "close");
-			server.send(200, "text/plain", (Update.hasError()) ? "FAIL" : "Update OK Neustart!!");
-			ESP.restart();
-			}, []() {
-				HTTPUpload& upload = server.upload();
-				if (upload.status == UPLOAD_FILE_START) {
-					Serial.setDebugOutput(true);
-					Serial.printf("Update: %s\n", upload.filename.c_str());
-					if (!Update.begin()) { //start with max available size
-						Update.printError(Serial);
-					}
-				}
-				else if (upload.status == UPLOAD_FILE_WRITE) {
-					if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-						Update.printError(Serial);
-					}
-				}
-				else if (upload.status == UPLOAD_FILE_END) {
-					if (Update.end(true)) { //true to set the size to the current progress
-						Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-					}
-					else {
-						Update.printError(Serial);
-					}
-					Serial.setDebugOutput(false);
-				}
-			});
-		server.begin();
-		MDNS.addService("http", "tcp", 80);
-
-		Serial.printf("Ready! Open http://%s.local in your browser\n", host);
-	}
-
-	else
-	{
-		Serial.println("WiFi Failed");
-	}
-
-
 	/******** Time Server Satr und setzen *****/
 
 	Udp.begin(localPort);
@@ -509,14 +435,13 @@ void setup()
 
 }
 
-
 void loop() 
 {
 	
-	WIFI_login();
+	//WIFI_login();
 	Blynk.run();
 	Timer.run();
-	server.handleClient();
+	portal.handleClient();
 
 	strip1.SetBrightness(aktHell);
 	strip1.Show();
@@ -561,9 +486,3 @@ void loop()
 	}
 
 }
-
-
-
-
-
-
