@@ -264,7 +264,7 @@ byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
 
 /************** Funktionen *********************/
 
-#include <Funktionen.h>
+#include <ProgFunk.h>
 #include <tft.h>
 #include <timer.h>
 #include <blynkfunk.h>
@@ -322,24 +322,6 @@ time_t getNtpTime()
 
 void WIFI_login() 
 {
-<<<<<<< HEAD
-	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
-	Serial.println("WiFi Login");
-	while (WiFi.status() != WL_CONNECTED && wifi_retry <= 10) {
-		wifi_retry++;
-		WiFi.persistent(false);   // daten nicht in Flash speichern
-		WiFi.mode(WIFI_STA);
-		Serial.printf("Connecting to %s ", ssid);	
-		WiFi.begin(ssid, pass);
-		Blynk.config(auth);
-		Blynk.connect();
-		tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
-		//Blynk.syncAll();
-		/*while (WiFi.status() == WL_CONNECTED)
-		{
-			tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
-		}*/	
-=======
 	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
 	Serial.println("WiFi Login");
 	while (WiFi.status() != WL_CONNECTED && wifi_retry <= 10) {
@@ -353,7 +335,6 @@ void WIFI_login()
 		Blynk.config(auth);
 		Blynk.connect();
 		//Blynk.syncAll();		
->>>>>>> 08f33756ac7e0273568194babaad32f5838dca08
 	}
 
 	if (wifi_retry >= 11) {
