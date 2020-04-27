@@ -1,5 +1,5 @@
 ﻿
-#define BLYNK_PRINT Serial
+//#define BLYNK_PRINT Serial
 
 #include <Arduino.h>
 #include <TFT_eSPI.h>
@@ -23,7 +23,31 @@ typedef WebServer WiFiWebServer;
 #include <AutoConnect.h>
 #define EXTERNAL_SWITCH_PIN 21
 WiFiWebServer server;
+
+static const char PAGE1[] PROGMEM = R"(
+{
+  "title": "Blynk Token",
+  "uri": "/token",
+  "menu": true,
+  "element": [
+    {
+      "name": "input1",
+      "type": "ACInput",
+      "global": true
+    },
+    {
+      "name": "send",
+      "type": "ACSubmit",
+      "value": "Save",
+      "uri": "/page2"
+    }
+  ]
+}
+)";
+
+
 AutoConnect portal(server);
+AutoConnectAux page1;
 AutoConnectConfig config;
 
 /*********** EEPROM Speichern ********************/
@@ -61,16 +85,16 @@ BlynkTimer Timer;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
 //const char* host = "aquarium-webupdate";
 
 /****** BETA Token *****************************/
 
-char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
-const char* host = "aquarium-webupdate-beta";
+//char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
+//const char* host = "aquarium-webupdate-beta";
 
-char ssid[] = "Andre+Janina";
-char pass[] = "sommer12";
+//char ssid[] = "Andre+Janina";
+//char pass[] = "sommer12";
 
 char serverblynk[] = "blynk-cloud.com";
 unsigned int port = 8442;
@@ -245,18 +269,18 @@ time_t getNtpTime()
 	IPAddress ntpServerIP; // NTP server's ip address
 
 	while (Udp.parsePacket() > 0); // discard any previously received packets
-	Serial.println("Transmit NTP Request");
+	//Serial.println("Transmit NTP Request");
 	// get a random server from the pool
 	WiFi.hostByName(ntpServerName, ntpServerIP);
-	Serial.print(ntpServerName);
-	Serial.print(": ");
-	Serial.println(ntpServerIP);
+	//Serial.print(ntpServerName);
+	//Serial.print(": ");
+	//Serial.println(ntpServerIP);
 	sendNTPpacket(ntpServerIP);
 	uint32_t beginWait = millis();
 	while (millis() - beginWait < 1500) {
 		int size = Udp.parsePacket();
 		if (size >= NTP_PACKET_SIZE) {
-			Serial.println("Receive NTP Response");
+			//Serial.println("Receive NTP Response");
 			Udp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
 			unsigned long secsSince1900;
 			// convert four bytes starting at location 40 to a long integer
@@ -320,22 +344,22 @@ void setup()
 {
 
 	Serial.begin(115200);
+
+	/**********************************************/
+	/**********************************************/
+	page1.load(PAGE1);
+	portal.join(page1);
+  	config.ota = AC_OTA_BUILTIN;
+  	portal.config(config);
+  	portal.begin();
+
 	/************ TFT Layout setzen ***************/  
 
 	TFT_Layout();
 
 	/***** Blynk Verbinden / WIFI Verbinden *******/
 
-  	config.ota = AC_OTA_BUILTIN;
-  	portal.config(config);
-
-	if (portal.begin()) 
-	{
-    Serial.println("WiFi connected: " + WiFi.localIP().toString());
-	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
-	Blynk.config(auth);
-	Blynk.connect();
-  	}
+	WIFI_login();
 
 	/*********** GPIO´s definieren ****************/
 
