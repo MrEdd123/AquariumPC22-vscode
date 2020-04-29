@@ -15,44 +15,70 @@
 #include <Preferences.h>
 #include <PageBuilder.h>
 
+/*********** EEPROM Speichern ********************/
+
+Preferences preferences; 
+
+/********** Auto Connect *************************/
 #include <WiFi.h>
 //#include <WiFiClientSecure.h>
 #include <WebServer.h>
-typedef WebServer WiFiWebServer;
 #include <EEPROM.h> 
 #include <AutoConnect.h>
 #define EXTERNAL_SWITCH_PIN 21
-WiFiWebServer server;
 
-static const char PAGE1[] PROGMEM = R"(
+/*** Extra Menue für Blynk Token Eingabe ***/
+
+static const char addonJson[] PROGMEM = R"raw(
 {
   "title": "Blynk Token",
-  "uri": "/token",
+  "uri": "/blynktoken",
   "menu": true,
   "element": [
     {
-      "name": "input1",
+      "name": "blyto",
       "type": "ACInput",
-      "global": true
+      "label": "Hier Blynk Token eingeben"
     },
     {
       "name": "send",
       "type": "ACSubmit",
       "value": "Save",
-      "uri": "/page2"
+      "uri": "/blyto"
     }
   ]
 }
-)";
+)raw";
 
-
-AutoConnect portal(server);
-AutoConnectAux page1;
+WebServer Server;
+AutoConnect portal(Server);
 AutoConnectConfig config;
+String BlynkTokenEE;
+char BlynkToken[34];
 
-/*********** EEPROM Speichern ********************/
+	// fuer umrechnung string zu char noetig
+	
+	//**************************************
+void blytoOn() {
 
-Preferences preferences; 
+  // Retrieve the value of a input-box named "feels"
+  String token = Server.arg("blyto");
+	//int str_len = token.length() + 1; 
+	//char BlynkToken[str_len];
+
+  // Echo back the value
+  String echo = "<html><p style=\"color:blue;font-family:verdana;font-size:300%;\">" + token + String(" and a bold world!</p></html>");
+  Server.send(200, "text/html", echo);
+  Serial.println (token);
+	
+	// Umrechnung string zu char 
+	token.toCharArray(BlynkToken, 35);
+	BlynkTokenEE = token;
+	preferences.putString("BlyTo", BlynkTokenEE);
+	//*************************************
+	Serial.println (BlynkToken);
+
+}
 
 /***********  NeoPixel Einstellungen   ***********/
 
@@ -69,37 +95,21 @@ TFT_eSPI tft = TFT_eSPI();
 /************* One Wire (Tempfühler) **********/
 
 #define ONE_WIRE_BUS			26				// Anschlusspin für OneWire			
-//DS18B20 (ONE_WIRE_BUS);					// One Wire Setup
 OneWire oneWire(ONE_WIRE_BUS);
 DS18B20 Tempfueh(&oneWire);
-
-//DallasTemperature Tempfueh(&oneWire);			// Pass our oneWire reference to Dallas Temperature.
-
-
-/**********************************************/
-
 
 /********** Blynk und WiFi Einstellungen ******/
 
 BlynkTimer Timer;
 
-// You should get Auth Token in the Blynk App.
-// Go to the Project Settings (nut icon).
-char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-//const char* host = "aquarium-webupdate";
+//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
 
 /****** BETA Token *****************************/
 
 //char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
-//const char* host = "aquarium-webupdate-beta";
-
-//char ssid[] = "Andre+Janina";
-//char pass[] = "sommer12";
 
 char serverblynk[] = "blynk-cloud.com";
 unsigned int port = 8442;
-
-
 
 /******* Variablen *******************************/
 
@@ -316,9 +326,12 @@ void WIFI_login()
 {
 	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
 	Serial.println("WiFi Login");
-	Blynk.config(auth);
+	BlynkTokenEE.toCharArray(BlynkToken, 35);
+	Serial.print ("BlynkToken: ");
+	Serial.println (BlynkToken);
+	Blynk.config(BlynkToken);
 	Blynk.connect();
-	while (WiFi.status() != WL_CONNECTED && wifi_retry <= 10) {
+	/*while (WiFi.status() != WL_CONNECTED && wifi_retry <= 10) {
 		wifi_retry++;
 		tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
 		//WiFi.persistent(false);   // daten nicht in Flash speichern
@@ -326,7 +339,7 @@ void WIFI_login()
       	//WiFi.mode(WIFI_OFF);
       	//WiFi.mode(WIFI_STA);
 		//WiFi.begin(ssid, pass);
-		Blynk.config(auth);
+		Blynk.config(BlynkToken);
 		Blynk.connect();
 		//Blynk.syncAll();		
 	}
@@ -335,7 +348,7 @@ void WIFI_login()
 		wifi_retry = 0;
 		Serial.println("\nReboot");
 		ESP.restart();
-	}
+	}*/
 }
 /********************************************************************************/
 
@@ -345,28 +358,9 @@ void setup()
 
 	Serial.begin(115200);
 
-	/**********************************************/
-	/**********************************************/
-	page1.load(PAGE1);
-	portal.join(page1);
-  	config.ota = AC_OTA_BUILTIN;
-  	portal.config(config);
-  	portal.begin();
-
 	/************ TFT Layout setzen ***************/  
 
 	TFT_Layout();
-
-	/***** Blynk Verbinden / WIFI Verbinden *******/
-
-	WIFI_login();
-
-	/*********** GPIO´s definieren ****************/
-
-	pinMode(heizung, OUTPUT);
-	pinMode(luefter, OUTPUT);
-	pinMode(co2, OUTPUT);
-
 
 	/************** EEPROM auslesen ***************/
 
@@ -403,6 +397,39 @@ void setup()
 	SoMiAusMin = preferences.getUInt("MIAuLM", 0);
 	SoMiAnStd = preferences.getUInt("MiAnLS", 0);
 	SoMiAnMin = preferences.getUInt("MIAnLM", 0);
+	BlynkTokenEE = preferences.getString("BlyTo");
+
+	Serial.print ("Blynk EE: ");
+	Serial.println (BlynkTokenEE);
+
+	pinMode(2, OUTPUT);
+	
+	/******* AutoConnect initialisieren *********/
+
+	Server.on("/blyto", blytoOn);  // Register /feels handler  // Register /feels handler
+  	portal.load(addonJson);           // Load a custom Web page
+	config.ota = AC_OTA_BUILTIN;
+	config.autoReconnect = true;
+	config.ticker = true;
+	config.tickerPort = 2;
+	config.tickerOn = HIGH;
+  	portal.config(config);
+  	portal.begin();
+
+	
+
+	/***** Blynk Verbinden / WIFI Verbinden *******/
+
+	WIFI_login();
+
+	/*********** GPIO´s definieren ****************/
+
+	pinMode(heizung, OUTPUT);
+	pinMode(luefter, OUTPUT);
+	pinMode(co2, OUTPUT);
+
+
+	
 
 
 	CO2Timer();
