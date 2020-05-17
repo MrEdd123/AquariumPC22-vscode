@@ -19,6 +19,19 @@
 
 Preferences preferences; 
 
+/********** Blynk Einstellungen ******/
+
+BlynkTimer Timer;
+
+//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
+
+/****** BETA Token *****************************/
+
+//char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
+
+char serverblynk[] = "blynk-cloud.com";
+unsigned int port = 8442;
+
 /********** Auto Connect *************************/
 #include <WiFi.h>
 //#include <WiFiClientSecure.h>
@@ -77,7 +90,9 @@ void blytoOn() {
 	preferences.putString("BlyTo", BlynkTokenEE);
 	//*************************************
 	Serial.println (BlynkToken);
-
+	Blynk.config(BlynkToken, serverblynk, port);
+	Blynk.connect();
+	
 }
 
 /***********  NeoPixel Einstellungen   ***********/
@@ -98,18 +113,7 @@ TFT_eSPI tft = TFT_eSPI();
 OneWire oneWire(ONE_WIRE_BUS);
 DS18B20 Tempfueh(&oneWire);
 
-/********** Blynk und WiFi Einstellungen ******/
 
-BlynkTimer Timer;
-
-//char auth[] = "06a15068bcdb4ae89620f5fd2e67c672";
-
-/****** BETA Token *****************************/
-
-//char auth[] = "HI89YVOp5X0dR6ycdXnP6WHd3XT4gmQv";
-
-char serverblynk[] = "blynk-cloud.com";
-unsigned int port = 8442;
 
 /******* Variablen *******************************/
 
@@ -202,8 +206,8 @@ int SonAu2[4] = { 150,5,0,0 };
 int SonAu3[4] = { 157,13,0,0 };
 int SonAu4[4] = { 163,21,1,0 };
 int SonAu5[4] = { 200,30,60,0 };
-int SonAu6[4] = { 240,50,100,100 };
-int SonAu7[4] = { 230,60,240,200 };
+int SonAu6[4] = { 240,50,100,80 };
+int SonAu7[4] = { 230,60,240,100 };
 
 // Sonnenuntergang Color Array
 //				{ R, G, B, W }
@@ -247,7 +251,6 @@ WidgetLED ledheizung(V23);
 WidgetLED ledco2(V24);
 WidgetLED led(V25);
 
-
 /***** NTP Server abrufen für Local Time ********/
 
 static const char ntpServerName[] = "de.pool.ntp.org";
@@ -270,7 +273,6 @@ byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
 #include <tft.h>
 #include <timer.h>
 #include <blynkfunk.h>
-
 
 /************************** NTP code ********************************************/
 
@@ -327,10 +329,10 @@ void WIFI_login()
 	tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
 	Serial.println("WiFi Login");
 	BlynkTokenEE.toCharArray(BlynkToken, 35);
-	Serial.print ("BlynkToken: ");
-	Serial.println (BlynkToken);
-	Blynk.config(BlynkToken);
+	Blynk.config(BlynkToken, serverblynk, port);
 	Blynk.connect();
+	
+	
 	/*while (WiFi.status() != WL_CONNECTED && wifi_retry <= 10) {
 		wifi_retry++;
 		tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
@@ -398,48 +400,51 @@ void setup()
 	SoMiAnStd = preferences.getUInt("MiAnLS", 0);
 	SoMiAnMin = preferences.getUInt("MIAnLM", 0);
 	BlynkTokenEE = preferences.getString("BlyTo");
-
-	Serial.print ("Blynk EE: ");
-	Serial.println (BlynkTokenEE);
-
-	pinMode(2, OUTPUT);
+	CO2Timer();
+	SunTimer();
+	FutterTimer();
+	
 	
 	/******* AutoConnect initialisieren *********/
 
-	Server.on("/blyto", blytoOn);  // Register /feels handler  // Register /feels handler
-  	portal.load(addonJson);           // Load a custom Web page
-	config.ota = AC_OTA_BUILTIN;
+	pinMode(2, OUTPUT);
+	Server.on("/blyto", blytoOn);  		// Register /feels handler  // Register /feels handler
+  	portal.load(addonJson);           	// Load a custom Web page
+	config.ota = AC_OTA_BUILTIN;		
 	config.autoReconnect = true;
 	config.ticker = true;
 	config.tickerPort = 2;
 	config.tickerOn = HIGH;
+	config.portalTimeout = 60000;  		// It will time out the Soft_AP Mode in 60 seconds
   	portal.config(config);
   	portal.begin();
 
 	
-
 	/***** Blynk Verbinden / WIFI Verbinden *******/
 
-	WIFI_login();
-
+	if (WiFi.status() == WL_CONNECTED) 
+	{
+    tft.drawBitmap(140, 0, wlan, 20, 20, TFT_GREEN);
+	portal.handleClient();
+	Serial.println("WiFi Login");
+	BlynkTokenEE.toCharArray(BlynkToken, 35);
+	//Blynk.config(BlynkToken, serverblynk, port);
+	Blynk.config(BlynkToken);
+	Blynk.connect();
+  	}
+  	else 
+	{
+    tft.drawBitmap(140, 0, wlan, 20, 20, TFT_RED);
+  	}
+  
 	/*********** GPIO´s definieren ****************/
 
 	pinMode(heizung, OUTPUT);
 	pinMode(luefter, OUTPUT);
 	pinMode(co2, OUTPUT);
 
-
-	
-
-
-	CO2Timer();
-	SunTimer();
-	FutterTimer();
-	
-
 	/**** Alarm Timer setzen für Funktionen ******/ 
 
-	//Timer.setInterval(1000, digitalClockDisplay);
 	Timer.setInterval(1000, ProgrammTimer);
 	Timer.setInterval(1000, Heizung);
 
